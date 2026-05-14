@@ -1,0 +1,3506 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Güvenli Halkalar | Blokzincir Güvenliği Simülasyonu</title>
+  <style>
+    /*
+      Güvenli Halkalar
+      Tek dosyalık HTML/CSS/JavaScript eğitim uygulaması.
+      Amaç: Blokzincir güvenliğini görsel ve etkileşimli olarak anlatmak.
+    */
+
+    :root {
+      color-scheme: dark;
+      --bg: #050812;
+      --panel: rgba(10, 18, 33, 0.62);
+      --panel-strong: rgba(11, 25, 44, 0.84);
+      --line: rgba(117, 234, 255, 0.22);
+      --text: #e8fbff;
+      --muted: #9db8c7;
+      --cyan: #22d9ff;
+      --blue: #2f7dff;
+      --green: #36f59f;
+      --lime: #a6ff4d;
+      --red: #ff4268;
+      --amber: #ffd166;
+      --violet: #c47dff;
+      --shadow: 0 24px 90px rgba(0, 0, 0, 0.48);
+      --radius: 8px;
+      --max: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(5, 8, 18, 0.94), rgba(8, 18, 26, 0.98) 54%, rgba(5, 8, 18, 0.98)),
+        linear-gradient(90deg, rgba(34, 217, 255, 0.06), rgba(54, 245, 159, 0.04), rgba(196, 125, 255, 0.035)),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      /* İnce bilim-fuarı hissi veren hareketli grid. */
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(34, 217, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(54, 245, 159, 0.05) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.28));
+      animation: gridDrift 28s linear infinite;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 54px,
+          rgba(34, 217, 255, 0.025) 55px,
+          transparent 57px
+        );
+      opacity: 0.5;
+      animation: scanLines 9s linear infinite;
+    }
+
+    @keyframes gridDrift {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 88px 132px, 88px 132px; }
+    }
+
+    @keyframes scanLines {
+      from { transform: translateX(-80px); }
+      to { transform: translateX(80px); }
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    #networkCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+    }
+
+    .page-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(5, 8, 18, 0.74);
+      border-bottom: 1px solid rgba(117, 234, 255, 0.16);
+      box-shadow: 0 14px 44px rgba(0, 0, 0, 0.26);
+    }
+
+    .topbar-inner {
+      width: min(var(--max), calc(100% - 28px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 66px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      position: relative;
+      border: 1px solid rgba(54, 245, 159, 0.62);
+      border-radius: var(--radius);
+      box-shadow: 0 0 26px rgba(54, 245, 159, 0.30), inset 0 0 20px rgba(34, 217, 255, 0.14);
+      overflow: hidden;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      animation: ringPulse 2.8s ease-in-out infinite;
+    }
+
+    .brand-mark::after {
+      inset: 13px;
+      border-color: var(--green);
+      animation-delay: -1s;
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { transform: scale(0.88); opacity: 0.72; }
+      50% { transform: scale(1.16); opacity: 1; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a,
+    .sound-toggle {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      transition: 180ms ease;
+    }
+
+    .nav-links a:hover,
+    .sound-toggle:hover {
+      color: var(--text);
+      border-color: rgba(34, 217, 255, 0.22);
+      background: rgba(34, 217, 255, 0.08);
+      box-shadow: 0 0 18px rgba(34, 217, 255, 0.14);
+    }
+
+    .sound-toggle {
+      color: var(--text);
+      background: rgba(54, 245, 159, 0.10);
+      border-color: rgba(54, 245, 159, 0.25);
+      white-space: nowrap;
+    }
+
+    .hero {
+      width: min(var(--max), calc(100% - 28px));
+      margin: 0 auto;
+      min-height: 80vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(340px, 0.96fr);
+      gap: 34px;
+      align-items: center;
+      padding: 56px 0 30px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 10px;
+      color: var(--green);
+      border: 1px solid rgba(54, 245, 159, 0.34);
+      border-radius: var(--radius);
+      background: rgba(54, 245, 159, 0.08);
+      box-shadow: 0 0 28px rgba(54, 245, 159, 0.12);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px var(--green);
+      animation: blink 1.8s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.38; transform: scale(0.82); }
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    .hero h1 {
+      margin: 22px 0 14px;
+      font-size: 4.8rem;
+      line-height: 0.94;
+      letter-spacing: 0;
+      text-shadow: 0 0 34px rgba(34, 217, 255, 0.26);
+    }
+
+    .gradient-text {
+      color: transparent;
+      background: linear-gradient(92deg, #f4fdff, var(--cyan) 40%, var(--green) 72%, #d6ffed);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .hero .subtitle {
+      margin: 0 0 16px;
+      color: var(--green);
+      font-size: 1.32rem;
+      font-weight: 850;
+    }
+
+    .hero .intro {
+      max-width: 660px;
+      color: #cfe4eb;
+      font-size: 1.08rem;
+      line-height: 1.68;
+    }
+
+    .hero-actions,
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      position: relative;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 15px;
+      border-radius: var(--radius);
+      color: #031018;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 0 24px rgba(34, 217, 255, 0.22), 0 12px 32px rgba(0, 0, 0, 0.30);
+      font-weight: 900;
+      overflow: hidden;
+      transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.44), transparent);
+      transform: translateX(-120%);
+      transition: transform 540ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      filter: saturate(1.16);
+      box-shadow: 0 0 34px rgba(54, 245, 159, 0.30), 0 16px 38px rgba(0, 0, 0, 0.32);
+    }
+
+    .btn:hover::after {
+      transform: translateX(120%);
+    }
+
+    .btn.secondary {
+      color: var(--text);
+      background: rgba(13, 27, 45, 0.72);
+      border: 1px solid rgba(34, 217, 255, 0.26);
+      box-shadow: 0 0 22px rgba(34, 217, 255, 0.12);
+    }
+
+    .btn.danger {
+      color: #fff8fb;
+      background: linear-gradient(135deg, #ff315f, #ff8f70);
+      box-shadow: 0 0 28px rgba(255, 66, 104, 0.28);
+    }
+
+    .btn.good {
+      color: #00140a;
+      background: linear-gradient(135deg, #57ffa8, #b7ff5b);
+    }
+
+    .icon-btn {
+      width: 42px;
+      padding: 0;
+      color: var(--text);
+      background: rgba(11, 25, 44, 0.74);
+      border: 1px solid rgba(117, 234, 255, 0.20);
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 482px;
+      border: 1px solid rgba(117, 234, 255, 0.18);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(160deg, rgba(15, 34, 58, 0.78), rgba(8, 14, 30, 0.68)),
+        linear-gradient(90deg, rgba(34, 217, 255, 0.06), rgba(54, 245, 159, 0.05));
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow), inset 0 0 60px rgba(34, 217, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border: 1px dashed rgba(117, 234, 255, 0.22);
+      border-radius: var(--radius);
+      animation: rotateDashed 26s linear infinite;
+    }
+
+    @keyframes rotateDashed {
+      to { transform: rotate(360deg); }
+    }
+
+    .chain-orbit {
+      position: absolute;
+      inset: 46px;
+      border-radius: 50%;
+      border: 1px solid rgba(34, 217, 255, 0.16);
+      animation: orbitSpin 22s linear infinite;
+    }
+
+    .chain-orbit:nth-child(2) {
+      inset: 88px;
+      border-color: rgba(54, 245, 159, 0.18);
+      animation-duration: 16s;
+      animation-direction: reverse;
+    }
+
+    @keyframes orbitSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .floating-block {
+      position: absolute;
+      width: 148px;
+      min-height: 92px;
+      padding: 12px;
+      border: 1px solid rgba(117, 234, 255, 0.25);
+      border-radius: var(--radius);
+      background: rgba(8, 18, 34, 0.80);
+      box-shadow: 0 0 30px rgba(34, 217, 255, 0.13), inset 0 0 26px rgba(54, 245, 159, 0.04);
+      backdrop-filter: blur(12px);
+      animation: floatBlock 5s ease-in-out infinite;
+    }
+
+    .floating-block strong {
+      display: block;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+
+    .floating-block span {
+      display: block;
+      height: 7px;
+      margin: 7px 0;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      opacity: 0.72;
+    }
+
+    .floating-block.b1 { top: 88px; left: 52px; }
+    .floating-block.b2 { top: 56px; right: 58px; animation-delay: -1.2s; }
+    .floating-block.b3 { bottom: 78px; left: 115px; animation-delay: -2.2s; }
+    .floating-block.b4 { right: 82px; bottom: 98px; animation-delay: -3.4s; }
+
+    @keyframes floatBlock {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+
+    .hero-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 154px;
+      height: 154px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #001114;
+      font-weight: 950;
+      background: conic-gradient(from 180deg, var(--cyan), var(--green), var(--amber), var(--cyan));
+      box-shadow: 0 0 44px rgba(34, 217, 255, 0.36), 0 0 70px rgba(54, 245, 159, 0.22);
+    }
+
+    .hero-center::after {
+      content: "GÜVEN";
+      width: 118px;
+      height: 118px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(231, 255, 255, 0.92);
+    }
+
+    .data-stream {
+      position: absolute;
+      left: -20%;
+      right: -20%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--green), transparent);
+      opacity: 0.48;
+      box-shadow: 0 0 18px rgba(34, 217, 255, 0.52);
+      animation: streamMove 3.4s linear infinite;
+    }
+
+    .data-stream.s1 { top: 26%; }
+    .data-stream.s2 { top: 51%; animation-delay: -1s; }
+    .data-stream.s3 { top: 76%; animation-delay: -2.1s; }
+
+    @keyframes streamMove {
+      from { transform: translateX(-20%) rotate(-6deg); }
+      to { transform: translateX(20%) rotate(-6deg); }
+    }
+
+    .section {
+      width: min(var(--max), calc(100% - 28px));
+      margin: 0 auto;
+      padding: 54px 0;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    .section-kicker {
+      margin-bottom: 8px;
+      color: var(--green);
+      font-size: 0.84rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .section h2 {
+      margin-bottom: 8px;
+      font-size: 2.16rem;
+      letter-spacing: 0;
+    }
+
+    .section-lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .glass {
+      border: 1px solid rgba(117, 234, 255, 0.18);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(145deg, rgba(14, 29, 50, 0.68), rgba(7, 14, 27, 0.58)),
+        rgba(9, 19, 34, 0.62);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .chain-stage {
+      min-height: 460px;
+      overflow: hidden;
+    }
+
+    .chain-track {
+      display: flex;
+      gap: 26px;
+      align-items: stretch;
+      min-height: 260px;
+      overflow-x: auto;
+      padding: 12px 6px 24px;
+      scrollbar-color: rgba(34, 217, 255, 0.40) transparent;
+    }
+
+    .block-card {
+      position: relative;
+      flex: 0 0 230px;
+      display: grid;
+      gap: 9px;
+      padding: 14px;
+      border: 1px solid rgba(54, 245, 159, 0.28);
+      border-radius: var(--radius);
+      background: rgba(7, 18, 29, 0.82);
+      box-shadow: 0 0 26px rgba(54, 245, 159, 0.10), inset 0 0 20px rgba(34, 217, 255, 0.04);
+      transition: 260ms ease;
+      animation: blockAdd 420ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    .block-card::after {
+      content: "";
+      position: absolute;
+      right: -27px;
+      top: 50%;
+      width: 27px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      box-shadow: 0 0 16px rgba(54, 245, 159, 0.54);
+    }
+
+    .block-card:last-child::after {
+      display: none;
+    }
+
+    .block-card.invalid,
+    .block-card.tampered {
+      border-color: rgba(255, 66, 104, 0.62);
+      background: rgba(44, 8, 19, 0.84);
+      box-shadow: 0 0 34px rgba(255, 66, 104, 0.24), inset 0 0 24px rgba(255, 66, 104, 0.08);
+      animation: dangerShake 520ms ease-in-out;
+    }
+
+    .block-card.invalid::after,
+    .block-card.tampered::after {
+      background: linear-gradient(90deg, var(--red), #ff9860);
+      box-shadow: 0 0 16px rgba(255, 66, 104, 0.60);
+    }
+
+    @keyframes blockAdd {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes dangerShake {
+      15% { transform: translateX(-5px); }
+      35% { transform: translateX(5px); }
+      55% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--cyan);
+      font-weight: 950;
+    }
+
+    .block-badge {
+      min-width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #001217;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 0 16px rgba(34, 217, 255, 0.25);
+    }
+
+    .hash-line {
+      display: grid;
+      gap: 3px;
+      padding: 8px;
+      border: 1px solid rgba(117, 234, 255, 0.12);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .hash-line strong {
+      color: #d8f9ff;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid rgba(54, 245, 159, 0.25);
+      border-radius: var(--radius);
+      color: var(--green);
+      background: rgba(54, 245, 159, 0.08);
+      font-weight: 850;
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .status-pill.bad {
+      color: var(--red);
+      border-color: rgba(255, 66, 104, 0.28);
+      background: rgba(255, 66, 104, 0.10);
+      animation: pulseBad 800ms ease-in-out infinite;
+    }
+
+    @keyframes pulseBad {
+      50% { filter: brightness(1.25); }
+    }
+
+    .explain-box {
+      display: grid;
+      gap: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .mini-stat {
+      display: grid;
+      gap: 4px;
+      padding: 12px;
+      border: 1px solid rgba(117, 234, 255, 0.14);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .mini-stat strong {
+      color: var(--text);
+      font-size: 1.2rem;
+    }
+
+    .hash-lab {
+      display: grid;
+      grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(117, 234, 255, 0.18);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: rgba(3, 10, 18, 0.74);
+      outline: 0;
+      box-shadow: inset 0 0 22px rgba(34, 217, 255, 0.05);
+      transition: 180ms ease;
+    }
+
+    textarea {
+      min-height: 136px;
+      padding: 14px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    input[type="text"] {
+      min-height: 42px;
+      padding: 0 12px;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus {
+      border-color: rgba(54, 245, 159, 0.56);
+      box-shadow: 0 0 24px rgba(54, 245, 159, 0.10), inset 0 0 22px rgba(34, 217, 255, 0.06);
+    }
+
+    .hash-output {
+      min-height: 178px;
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid rgba(34, 217, 255, 0.24);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(135deg, rgba(34, 217, 255, 0.09), rgba(54, 245, 159, 0.05)),
+        rgba(2, 8, 15, 0.72);
+      box-shadow: inset 0 0 36px rgba(34, 217, 255, 0.08);
+    }
+
+    .hash-output.generating {
+      animation: hashGlow 520ms ease;
+    }
+
+    @keyframes hashGlow {
+      0% { box-shadow: inset 0 0 36px rgba(34, 217, 255, 0.08); }
+      50% { box-shadow: 0 0 40px rgba(54, 245, 159, 0.20), inset 0 0 48px rgba(34, 217, 255, 0.14); }
+      100% { box-shadow: inset 0 0 36px rgba(34, 217, 255, 0.08); }
+    }
+
+    .hash-text {
+      color: #d9fff0;
+      font-size: 1rem;
+      line-height: 1.65;
+      word-break: break-all;
+    }
+
+    .avalanche {
+      margin: 0;
+      color: var(--amber);
+      font-weight: 850;
+    }
+
+    .network-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.36fr);
+      gap: 18px;
+    }
+
+    .node-map {
+      position: relative;
+      min-height: 360px;
+      aspect-ratio: 16 / 8;
+      overflow: hidden;
+      border: 1px solid rgba(117, 234, 255, 0.16);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(5, 14, 24, 0.44), rgba(5, 9, 18, 0.82)),
+        repeating-linear-gradient(0deg, rgba(34, 217, 255, 0.04) 0 1px, transparent 1px 34px),
+        repeating-linear-gradient(90deg, rgba(54, 245, 159, 0.035) 0 1px, transparent 1px 34px);
+    }
+
+    .node-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .node-link {
+      stroke: rgba(34, 217, 255, 0.32);
+      stroke-width: 1.5;
+      stroke-dasharray: 8 8;
+      animation: lineDash 2.8s linear infinite;
+      filter: drop-shadow(0 0 5px rgba(34, 217, 255, 0.36));
+      vector-effect: non-scaling-stroke;
+    }
+
+    .node-link.corrupt {
+      stroke: rgba(255, 66, 104, 0.45);
+    }
+
+    @keyframes lineDash {
+      to { stroke-dashoffset: -32; }
+    }
+
+    .svg-node {
+      cursor: pointer;
+    }
+
+    .svg-node circle {
+      stroke: rgba(54, 245, 159, 0.72);
+      stroke-width: 1.2;
+      fill: url(#nodeGradient);
+      filter: drop-shadow(0 0 8px rgba(54, 245, 159, 0.62));
+      transition: 180ms ease;
+    }
+
+    .svg-node:hover circle {
+      stroke-width: 1.8;
+      filter: drop-shadow(0 0 14px rgba(54, 245, 159, 0.85));
+    }
+
+    .svg-node text {
+      fill: #00140b;
+      font-weight: 950;
+      font-size: 4px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .svg-node.central circle {
+      r: 7.2;
+      stroke-width: 1.8;
+      filter: drop-shadow(0 0 13px rgba(34, 217, 255, 0.86));
+    }
+
+    .svg-node.offline circle {
+      fill: url(#offlineGradient);
+      stroke: rgba(157, 184, 199, 0.46);
+      filter: none;
+      opacity: 0.76;
+    }
+
+    .svg-node.offline text {
+      fill: #d4dde2;
+    }
+
+    .svg-node.corrupt circle {
+      fill: url(#corruptGradient);
+      stroke: rgba(255, 66, 104, 0.78);
+      filter: drop-shadow(0 0 12px rgba(255, 66, 104, 0.78));
+      animation: corruptNode 680ms ease-in-out infinite;
+    }
+
+    .svg-node.corrupt text {
+      fill: #fff7fa;
+    }
+
+    .node-map-key {
+      position: absolute;
+      left: 14px; top: 14px;
+      z-index: 4;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid rgba(117,234,255,0.16);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: rgba(5,8,18,0.80);
+      font-size: 0.78rem;
+      font-weight: 800;
+      backdrop-filter: blur(4px);
+    }
+
+    .node-map-key .key-item { display:flex; align-items:center; gap:5px; }
+    .key-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+    .conn-counter {
+      position: absolute;
+      right: 14px; top: 14px; z-index: 4;
+      padding: 6px 12px;
+      border: 1px solid rgba(54,245,159,0.22);
+      border-radius: var(--radius);
+      background: rgba(5,8,18,0.80);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      backdrop-filter: blur(4px);
+    }
+
+    .conn-counter strong { color: var(--green); font-size: 1rem; }
+
+    .node-tooltip {
+      position: absolute;
+      z-index: 20;
+      padding: 10px 14px;
+      border: 1px solid rgba(34,217,255,0.3);
+      border-radius: var(--radius);
+      background: rgba(5,10,22,0.94);
+      color: var(--text);
+      font-size: 0.82rem;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+      min-width: 160px;
+      line-height: 1.7;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      transform: translate(-50%, calc(-100% - 14px));
+      transition: opacity 180ms ease;
+    }
+
+    .node-tooltip::after {
+      content:"";
+      position:absolute;
+      left:50%; bottom:-6px;
+      transform:translateX(-50%);
+      border:6px solid transparent;
+      border-top-color: rgba(34,217,255,0.35);
+    }
+
+    @keyframes nodePulseRing {
+      0%   { stroke-width: 1.2; opacity: 0.65; }
+      100% { stroke-width: 0;   opacity: 0; }
+    }
+
+    .pulse-ring {
+      fill: none;
+      stroke: rgba(54,245,159,0.55);
+      animation: nodePulseRing 2s ease-out infinite;
+    }
+
+    .pulse-ring.corrupt-ring { stroke: rgba(255,66,104,0.6); }
+
+    @keyframes corruptNode {
+      50% { filter: brightness(1.25) hue-rotate(-12deg); }
+    }
+
+    .packet {
+      fill: var(--cyan);
+      filter: drop-shadow(0 0 6px rgba(34,217,255,0.95));
+      pointer-events: none;
+    }
+
+    .packet.corrupt-packet {
+      fill: #ff7a50;
+      filter: drop-shadow(0 0 6px rgba(255,100,60,0.9));
+    }
+
+    #healthChart { width:100%; height:52px; display:block; }
+
+
+    .side-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .health-meter {
+      display: grid;
+      gap: 10px;
+    }
+
+    .meter-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .meter {
+      height: 14px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(117, 234, 255, 0.12);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+      box-shadow: 0 0 18px rgba(54, 245, 159, 0.28);
+      transition: width 320ms ease;
+    }
+
+    .node-log {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .node-log span {
+      display: block;
+      padding: 8px 10px;
+      border-left: 3px solid rgba(34, 217, 255, 0.48);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .attack-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.06fr) minmax(310px, 0.94fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .attack-arena {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .attack-arena.danger-mode {
+      border-color: rgba(255, 66, 104, 0.45);
+      animation: alarmFrame 720ms ease-in-out infinite;
+    }
+
+    .attack-arena.danger-mode::before {
+      content: "AĞ TEHLİKEDE";
+      position: absolute;
+      z-index: 3;
+      top: 18px;
+      right: 18px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      color: #fff;
+      background: rgba(255, 66, 104, 0.82);
+      box-shadow: 0 0 30px rgba(255, 66, 104, 0.44);
+      font-weight: 950;
+      animation: alarmText 620ms ease-in-out infinite;
+    }
+
+    @keyframes alarmFrame {
+      50% { box-shadow: 0 0 42px rgba(255, 66, 104, 0.34), inset 0 0 50px rgba(255, 66, 104, 0.08); }
+    }
+
+    @keyframes alarmText {
+      50% { transform: scale(1.04); }
+    }
+
+    .miner-field {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .miner {
+      min-height: 134px;
+      display: grid;
+      gap: 10px;
+      align-content: center;
+      padding: 12px;
+      border: 1px solid rgba(117, 234, 255, 0.16);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.04);
+      transition: 240ms ease;
+    }
+
+    .miner.attacker {
+      border-color: rgba(255, 66, 104, 0.58);
+      background: rgba(255, 66, 104, 0.10);
+      box-shadow: 0 0 26px rgba(255, 66, 104, 0.18);
+    }
+
+    .miner-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 950;
+    }
+
+    .miner-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #061018;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 0 18px rgba(34, 217, 255, 0.20);
+    }
+
+    .miner.attacker .miner-icon {
+      color: #fff;
+      background: linear-gradient(135deg, var(--red), #ff9b5c);
+    }
+
+    .pickaxe-icon,
+    .thief-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+    }
+
+    .pickaxe-icon svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+    }
+
+    .thief-icon svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      filter: drop-shadow(0 0 4px rgba(255, 66, 104, 0.75));
+    }
+
+    .power-bar {
+      height: 10px;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .power-bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 420ms ease;
+    }
+
+    .miner.attacker .power-bar span {
+      background: linear-gradient(90deg, var(--red), #ff9b5c);
+    }
+
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: 176px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .donut {
+      width: 176px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: conic-gradient(var(--red) 0deg, var(--red) 0deg, var(--green) 0deg 360deg);
+      box-shadow: 0 0 36px rgba(34, 217, 255, 0.12);
+      transition: background 350ms ease;
+    }
+
+    .donut::after {
+      content: attr(data-label);
+      width: 116px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--text);
+      background: rgba(5, 8, 18, 0.88);
+      border: 1px solid rgba(117, 234, 255, 0.18);
+      font-weight: 950;
+    }
+
+    .fake-chain {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .fake-block {
+      display: none;
+      padding: 10px;
+      border: 1px solid rgba(255, 66, 104, 0.34);
+      border-radius: var(--radius);
+      color: #ffe8ee;
+      background: rgba(255, 66, 104, 0.10);
+      animation: fakeBlock 740ms ease-in-out infinite;
+    }
+
+    .danger-mode .fake-block {
+      display: block;
+    }
+
+    @keyframes fakeBlock {
+      50% { transform: translateX(5px); filter: brightness(1.2); }
+    }
+
+    .double-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .wallet-card {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    /* ── Detective mode ── */
+    .detective-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: rgba(34,217,255,0.04);
+      border: 1px solid rgba(34,217,255,0.12);
+      border-radius: var(--radius);
+    }
+
+    .det-step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(34,217,255,0.2);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: all 320ms ease;
+    }
+
+    .det-step.active {
+      border-color: var(--cyan);
+      background: rgba(34,217,255,0.12);
+      color: var(--cyan);
+    }
+
+    .det-step.done {
+      border-color: var(--green);
+      background: rgba(54,245,159,0.10);
+      color: var(--green);
+    }
+
+    .det-num {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: currentColor;
+      color: #000;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .det-arrow {
+      color: rgba(255,255,255,0.2);
+      font-size: 1.2rem;
+    }
+
+    .double-grid-new {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .wallet-card-new {
+      min-width: 0;
+    }
+
+    /* Node vote grid yeni */
+    .node-vote-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .node-card {
+      display: grid;
+      gap: 4px;
+      padding: 10px 6px;
+      border: 1px solid rgba(117,234,255,0.14);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.03);
+      text-align: center;
+      transition: all 380ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    .node-card .node-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+      transition: transform 300ms ease;
+    }
+
+    .node-card .node-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .node-card .node-vote-text {
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .node-card.voting {
+      border-color: rgba(255,209,102,0.5);
+      background: rgba(255,209,102,0.08);
+      transform: scale(1.06);
+    }
+
+    .node-card.yes {
+      border-color: rgba(54,245,159,0.5);
+      background: rgba(54,245,159,0.10);
+    }
+
+    .node-card.yes .node-vote-text { color: var(--green); }
+
+    .node-card.no {
+      border-color: rgba(255,66,104,0.5);
+      background: rgba(255,66,104,0.10);
+    }
+
+    .node-card.no .node-vote-text { color: var(--red); }
+
+    @keyframes nodePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,209,102,0.6); }
+      70%  { box-shadow: 0 0 0 10px rgba(255,209,102,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,209,102,0); }
+    }
+
+    .node-card.voting { animation: nodePulse 0.8s ease; }
+
+    /* SVG ok animasyonu */
+    @keyframes dashFlow {
+      to { stroke-dashoffset: -20; }
+    }
+
+    .arrow-active {
+      animation: dashFlow 0.5s linear infinite;
+    }
+
+    /* tx / step shared styles */
+    .tx-list, .verify-steps { display: grid; gap: 8px; }
+
+    .tx-item, .step-item {
+      padding: 10px;
+      border: 1px solid rgba(117,234,255,0.14);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.035);
+      transition: 220ms ease;
+    }
+
+    .tx-item.approved, .step-item.done {
+      border-color: rgba(54,245,159,0.34);
+      background: rgba(54,245,159,0.08);
+    }
+
+    .tx-item.pending {
+      border-color: rgba(255,209,102,0.34);
+      background: rgba(255,209,102,0.08);
+    }
+
+    .tx-item.rejected, .step-item.bad {
+      border-color: rgba(255,66,104,0.38);
+      background: rgba(255,66,104,0.10);
+    }
+
+    @keyframes txFlashApproved {
+      50% { border-color:rgba(54,245,159,0.95); background:rgba(54,245,159,0.28); box-shadow:0 0 28px rgba(54,245,159,0.42); }
+    }
+
+    @keyframes txFlashRejected {
+      50% { border-color:rgba(255,66,104,0.95); background:rgba(255,66,104,0.28); box-shadow:0 0 28px rgba(255,66,104,0.42); }
+    }
+
+    .tx-item.flash-approved { animation: txFlashApproved 520ms ease-in-out 2; }
+    .tx-item.flash-rejected { animation: txFlashRejected 520ms ease-in-out 2; }
+
+    .factor-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .factor-card {
+      position: relative;
+      min-height: 196px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding: 16px;
+      overflow: hidden;
+      transition: 220ms ease;
+    }
+
+    .factor-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(54, 245, 159, 0.34);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34), 0 0 28px rgba(34, 217, 255, 0.12);
+    }
+
+    .factor-icon {
+      width: 46px;
+      height: 46px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(34, 217, 255, 0.24);
+      border-radius: var(--radius);
+      background: rgba(34, 217, 255, 0.08);
+      box-shadow: 0 0 20px rgba(34, 217, 255, 0.12);
+    }
+
+    .glyph {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .glyph svg {
+      width: 26px;
+      height: 26px;
+      display: block;
+    }
+
+    .score-effect {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .quiz-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .quiz-question {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid rgba(117, 234, 255, 0.14);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .answer-btn {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 10px 12px;
+      border: 1px solid rgba(117, 234, 255, 0.16);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.045);
+      text-align: left;
+      transition: 180ms ease;
+    }
+
+    .answer-btn:hover {
+      border-color: rgba(34, 217, 255, 0.40);
+      background: rgba(34, 217, 255, 0.08);
+    }
+
+    .answer-btn.selected {
+      border-color: rgba(54, 245, 159, 0.48);
+      background: rgba(54, 245, 159, 0.10);
+      box-shadow: 0 0 18px rgba(54, 245, 159, 0.12);
+    }
+
+    .answer-btn.correct {
+      border-color: rgba(54, 245, 159, 0.62);
+      background: rgba(54, 245, 159, 0.16);
+    }
+
+    .answer-btn.wrong {
+      border-color: rgba(255, 66, 104, 0.62);
+      background: rgba(255, 66, 104, 0.14);
+    }
+
+    .quiz-result {
+      display: none;
+      padding: 18px;
+      border: 1px solid rgba(54, 245, 159, 0.30);
+      border-radius: var(--radius);
+      background: rgba(54, 245, 159, 0.08);
+    }
+
+    .quiz-result.show {
+      display: block;
+      animation: blockAdd 420ms ease;
+    }
+
+    .conclusion {
+      display: grid;
+      grid-template-columns: 0.72fr 1.28fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .conclusion-badge {
+      min-height: 280px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .conclusion-badge::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border: 2px solid rgba(54, 245, 159, 0.36);
+      border-radius: 50%;
+      animation: orbitSpin 18s linear infinite;
+    }
+
+    .conclusion-badge::after {
+      content: "";
+      position: absolute;
+      width: 174px;
+      height: 174px;
+      border: 2px dashed rgba(34, 217, 255, 0.34);
+      border-radius: 50%;
+      animation: orbitSpin 12s linear infinite reverse;
+    }
+
+    .conclusion-badge strong {
+      position: relative;
+      z-index: 1;
+      display: block;
+      color: var(--green);
+      font-size: 2.1rem;
+      text-shadow: 0 0 26px rgba(54, 245, 159, 0.24);
+    }
+
+    .takeaways {
+      display: grid;
+      gap: 10px;
+    }
+
+    .takeaway {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px;
+      border: 1px solid rgba(117, 234, 255, 0.14);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .takeaway span {
+      flex: 0 0 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #00130b;
+      background: var(--green);
+      font-weight: 950;
+    }
+
+    .footer-note {
+      padding: 24px 0 50px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.92rem;
+    }
+
+    [data-tip] {
+      position: relative;
+    }
+
+    [data-tip]::before,
+    [data-tip]::after {
+      position: absolute;
+      left: 50%;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transition: 160ms ease;
+    }
+
+    [data-tip]::before {
+      content: attr(data-tip);
+      bottom: calc(100% + 10px);
+      width: max-content;
+      max-width: 260px;
+      padding: 8px 10px;
+      transform: translate(-50%, 8px);
+      color: var(--text);
+      border: 1px solid rgba(117, 234, 255, 0.24);
+      border-radius: var(--radius);
+      background: rgba(4, 10, 18, 0.94);
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.38);
+      font-size: 0.78rem;
+      line-height: 1.35;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    [data-tip]::after {
+      content: "";
+      bottom: calc(100% + 3px);
+      border: 7px solid transparent;
+      border-top-color: rgba(117, 234, 255, 0.38);
+      transform: translate(-50%, 8px);
+    }
+
+    [data-tip]:hover::before,
+    [data-tip]:hover::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .hide-mobile {
+      display: inline;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .grid-2,
+      .hash-lab,
+      .network-shell,
+      .attack-grid,
+      .double-grid,
+      .conclusion {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 52px;
+      }
+
+      .hero h1 {
+        font-size: 3.7rem;
+      }
+
+      .hero-visual {
+        min-height: 380px;
+      }
+
+      .factor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+
+      .nav-links {
+        justify-content: flex-start;
+      }
+
+      .hero h1 {
+        font-size: 3rem;
+      }
+
+      .hero-visual {
+        min-height: 340px;
+      }
+
+      .floating-block {
+        width: 124px;
+      }
+
+      .floating-block.b1 { left: 20px; }
+      .floating-block.b2 { right: 20px; }
+      .floating-block.b3 { left: 42px; }
+      .floating-block.b4 { right: 34px; }
+
+      .section-header,
+      .donut-wrap,
+      .coin-route {
+        grid-template-columns: 1fr;
+      }
+
+      .miner-field,
+      .factor-grid,
+      .answers,
+      .vote-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .node-map {
+        min-height: 330px;
+        aspect-ratio: auto;
+      }
+
+      .hide-mobile {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="networkCanvas" aria-hidden="true"></canvas>
+
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top" aria-label="Güvenli Halkalar ana bölüm">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>Güvenli Halkalar</span>
+        </a>
+        <nav class="nav-links" aria-label="Sayfa bölümleri">
+          <a href="#chain">Zincir</a>
+          <a href="#hash">Hash</a>
+          <a href="#nodes">Node</a>
+          <a href="#attack">%51</a>
+          <a href="#double">Çifte Harcama</a>
+          <a href="#quiz">Test</a>
+          <button class="sound-toggle" id="soundToggle" type="button" data-tip="Tıklayınca küçük arayüz sesleri açılır.">Ses: Kapalı</button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="heroTitle">
+        <div>
+          <div class="eyebrow">TÜBİTAK 4006-B ortaokul araştırma projesi</div>
+          <h1 id="heroTitle"><span class="gradient-text">Güvenli Halkalar</span></h1>
+          <p class="subtitle">Blokzincirde Zincir Güvenliğini Anlamak</p>
+          <p class="intro">
+            Blokzincirin güvenliğini etkileyen unsurları etkileşimli simülasyonlarla keşfedin.
+            Bloklar, hashler, node ağları, %51 saldırısı ve çifte harcama konuları bu sayfada canlı olarak denenebilir.
+          </p>
+          <div class="hero-actions">
+            <button class="btn" id="startSimulation" type="button">Simülasyonu Başlat</button>
+            <a class="btn secondary" href="#attack">Sistemi Saldırıya Uğrat</a>
+            <a class="btn secondary" href="#nodes">Ağı Güçlendir</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Animasyonlu blokzincir güvenliği görseli">
+          <div class="chain-orbit"></div>
+          <div class="chain-orbit"></div>
+          <div class="data-stream s1"></div>
+          <div class="data-stream s2"></div>
+          <div class="data-stream s3"></div>
+          <div class="floating-block b1"><strong>Blok 01</strong><span></span><span></span><span></span></div>
+          <div class="floating-block b2"><strong>Hash</strong><span></span><span></span><span></span></div>
+          <div class="floating-block b3"><strong>Node</strong><span></span><span></span><span></span></div>
+          <div class="floating-block b4"><strong>Konsensüs</strong><span></span><span></span><span></span></div>
+          <div class="hero-center"></div>
+        </div>
+      </section>
+
+      <section class="section" id="chain" aria-labelledby="chainTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">1. simülasyon</div>
+            <h2 id="chainTitle">Blokzincir Nasıl Çalışır?</h2>
+            <p class="section-lead">Her blok, önceki bloğun hash bilgisini taşır. Bir blok değişirse, ondan sonraki bağlantılar şüpheli hale gelir.</p>
+          </div>
+          <span class="status-pill" id="chainStatus">Zincir geçerli</span>
+        </div>
+
+        <div class="grid-2">
+          <div class="glass panel chain-stage">
+            <div class="chain-track" id="chainTrack" aria-live="polite"></div>
+            <div class="control-row">
+              <button class="btn" id="addBlock" type="button" data-tip="Son bloğun hash değeri yeni bloğun önceki hash alanına yazılır.">Yeni Blok Ekle</button>
+              <button class="btn danger" id="tamperBlock" type="button" data-tip="2. bloktaki veri değiştirildiğinde sonraki blokların bağlantısı bozulur.">2. Bloğu Değiştir</button>
+              <button class="btn secondary" id="repairChain" type="button" data-tip="Tüm bloklar sırayla yeniden hesaplanır; gerçek dünyada bunu yapmak çok pahalıdır.">Zinciri Onar</button>
+            </div>
+          </div>
+
+          <aside class="glass panel explain-box">
+            <div class="mini-stat">
+              <span class="small">Aktif blok sayısı</span>
+              <strong id="blockCount">0</strong>
+            </div>
+            <div class="mini-stat">
+              <span class="small">Son hash</span>
+              <strong class="mono" id="lastHash">-</strong>
+            </div>
+            <p>
+              <strong>Basit mantık:</strong> Hash, verinin parmak izi gibidir. Veri değişince hash de değişir.
+              Sonraki blok eski hash değerini beklediği için zincirde kırmızı uyarı oluşur.
+            </p>
+            <p class="small">
+              Bu simülasyon eğitim amaçlı sahte hash üretir; davranış olarak gerçek hashlerin "küçük değişiklik, büyük sonuç" mantığını taklit eder.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="hash" aria-labelledby="hashTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">2. simülasyon</div>
+            <h2 id="hashTitle">SHA-256 ve Hash Mantığı</h2>
+            <p class="section-lead">Aşağıdaki veriyi değiştirin. Bir harf bile değiştiğinde 64 karakterlik hash tamamen farklı görünür.</p>
+          </div>
+        </div>
+
+        <div class="glass panel hash-lab">
+          <div class="field">
+            <label for="hashInput">Veri girin</label>
+            <textarea id="hashInput">Ali, Ayşe'ye 10 coin gönderdi.</textarea>
+            <p class="small">Hash, veriyi saklamaz; sadece verinin değiştirilip değiştirilmediğini anlamaya yardım eder.</p>
+          </div>
+          <div style="display:grid;gap:12px;">
+            <div class="hash-output" id="hashOutputBox">
+              <strong>Üretilen hash (SHA-256)</strong>
+              <div class="hash-text mono" id="hashResult"></div>
+              <p class="avalanche">Bir harf bile değişirse tüm hash değişir — çığ etkisi.</p>
+            </div>
+            <div id="avalancheBox" style="display:none;padding:14px;border:1px solid rgba(255,210,50,0.28);border-radius:var(--radius);background:rgba(255,210,50,0.06);">
+              <strong style="color:var(--amber);font-size:0.85rem;display:block;margin-bottom:8px;">⚡ Çığ Etkisi — Önceki hash ile karşılaştırma</strong>
+              <div style="display:grid;gap:6px;">
+                <div>
+                  <span class="small" style="display:block;margin-bottom:3px;">Önceki hash</span>
+                  <div class="mono small" id="prevHashDisplay" style="color:var(--muted);word-break:break-all;line-height:1.5;"></div>
+                </div>
+                <div>
+                  <span class="small" style="display:block;margin-bottom:3px;">Yeni hash</span>
+                  <div class="mono small" id="newHashDisplay" style="word-break:break-all;line-height:1.5;"></div>
+                </div>
+                <div style="margin-top:4px;">
+                  <span class="small">Farklı karakter sayısı: </span>
+                  <strong id="diffCount" style="color:var(--amber)"></strong>
+                  <span class="small"> / 64</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="nodes" aria-labelledby="nodesTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">3. simülasyon</div>
+            <h2 id="nodesTitle">Ağ Yapısı: Node Sistemi</h2>
+            <p class="section-lead">Blokzincirde tek bir merkez yerine çok sayıda düğüm vardır. Veri ağda dolaşır, node'lar birbirini kontrol eder.</p>
+          </div>
+        </div>
+
+        <div class="glass panel network-shell">
+          <div class="node-map" id="nodeMap" aria-label="Node ağı simülasyonu">
+            <div class="node-map-key">
+              <span class="key-item"><span class="key-dot" style="background:#36f59f;box-shadow:0 0 6px #36f59f"></span>Aktif</span>
+              <span class="key-item"><span class="key-dot" style="background:#ff4268;box-shadow:0 0 6px #ff4268"></span>Bozuk</span>
+              <span class="key-item"><span class="key-dot" style="background:#455364"></span>Kapalı</span>
+            </div>
+            <div class="conn-counter">Bağlantı: <strong id="connCount">21</strong></div>
+            <div id="nodeTooltip" class="node-tooltip" style="display:none;position:absolute;"></div>
+            <svg class="node-svg" id="nodeSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Node ağı görseli">
+              <defs>
+                <radialGradient id="nodeGradient" cx="35%" cy="25%" r="70%">
+                  <stop offset="0%" stop-color="#edfff9" />
+                  <stop offset="55%" stop-color="#36f59f" />
+                  <stop offset="100%" stop-color="#12b86d" />
+                </radialGradient>
+                <radialGradient id="corruptGradient" cx="35%" cy="25%" r="70%">
+                  <stop offset="0%" stop-color="#ffb7c5" />
+                  <stop offset="58%" stop-color="#ff4268" />
+                  <stop offset="100%" stop-color="#7c0e28" />
+                </radialGradient>
+                <linearGradient id="offlineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#455364" />
+                  <stop offset="100%" stop-color="#121b26" />
+                </linearGradient>
+              </defs>
+              <g id="nodeLinks"></g>
+              <g id="packetLayer"></g>
+              <g id="nodeLayer"></g>
+            </svg>
+          </div>
+          <aside class="side-panel">
+            <div class="health-meter">
+              <div class="meter-label"><span>Ağ sağlığı</span><strong id="healthValue">100%</strong></div>
+              <div class="meter"><div class="meter-fill" id="healthFill"></div></div>
+              <canvas id="healthChart" aria-label="Ağ sağlık geçmişi grafiği"></canvas>
+            </div>
+            <div class="control-row">
+              <button class="btn" id="propagateData" type="button">Veri Yay</button>
+              <button class="btn secondary" id="addNode" type="button">Yeni Node Ekle</button>
+              <button class="btn secondary" id="shutdownNode" type="button">Node Kapat</button>
+              <button class="btn danger" id="corruptNode" type="button">Node Boz</button>
+            </div>
+            <button class="btn good" id="strengthenNetwork" type="button">Ağı Güçlendir</button>
+            <p class="small">İpucu: Bir node'a tıklayarak onu sırayla aktif, bozuk ve kapalı hale getirebilirsiniz.</p>
+            <div class="node-log" id="nodeLog" aria-live="polite"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="attack" aria-labelledby="attackTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">4. simülasyon</div>
+            <h2 id="attackTitle">%51 Saldırısı Simülasyonu</h2>
+            <p class="section-lead">Bir saldırgan, toplam işlem gücünün çoğunluğunu ele geçirirse sahte blok üretme şansı artar.</p>
+          </div>
+          <span class="status-pill" id="attackStatus">Ağ güvende</span>
+        </div>
+
+        <div class="attack-grid">
+          <div class="glass panel attack-arena" id="attackArena">
+            <div class="control-row">
+              <button class="btn secondary icon-btn" id="decreaseAttackers" type="button" data-tip="Saldırgan madenci sayısını azalt.">-</button>
+              <button class="btn danger" id="increaseAttackers" type="button">Saldırgan Node Artır</button>
+              <button class="btn danger" id="attackDemo" type="button">Sistemi Saldırıya Uğrat</button>
+              <button class="btn good" id="defendDemo" type="button">Ağı Güçlendir</button>
+            </div>
+            <div class="miner-field" id="minerField"></div>
+            <div class="fake-chain" id="fakeChain">
+              <div class="fake-block mono">Sahte Blok: Ali -> Saldırgan 100 coin</div>
+              <div class="fake-block mono">Sahte İşlem: Aynı coin tekrar harcanmaya çalışıyor</div>
+            </div>
+          </div>
+
+          <aside class="glass panel side-panel">
+            <div class="donut-wrap">
+              <div class="donut" id="attackDonut" data-label="0%"></div>
+              <div>
+                <h3>Güç Dağılımı</h3>
+                <p class="small">Kırmızı alan saldırganların toplam işlem gücünü, yeşil alan dürüst madencileri gösterir.</p>
+              </div>
+            </div>
+            <div class="health-meter">
+              <div class="meter-label"><span>Saldırgan gücü</span><strong id="attackerPowerLabel">0%</strong></div>
+              <div class="meter"><div class="meter-fill" id="attackerPowerFill"></div></div>
+            </div>
+            <div class="health-meter">
+              <div class="meter-label"><span>Dürüst ağ gücü</span><strong id="honestPowerLabel">100%</strong></div>
+              <div class="meter"><div class="meter-fill" id="honestPowerFill"></div></div>
+            </div>
+            <p id="attackExplanation" class="small">Saldırgan gücü %51 altında kaldığında ağ çoğunluğu sahte bloğu reddeder.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="double" aria-labelledby="doubleTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">5. mini oyun</div>
+            <h2 id="doubleTitle">Double Spending: Çifte Harcama Simülasyonu</h2>
+            <p class="section-lead">Ali aynı 100 coin'i iki kişiye göndermeye çalışırsa ne olur? Dedektif gibi adım adım takip et.</p>
+          </div>
+          <span class="status-pill" id="doubleStatus">Hazır</span>
+        </div>
+
+        <!-- Dedektif adım göstergesi -->
+        <div class="detective-steps" id="detectiveSteps">
+          <div class="det-step active" data-step="0"><span class="det-num">1</span><span class="det-label">İşlemi Başlat</span></div>
+          <div class="det-arrow">›</div>
+          <div class="det-step" data-step="1"><span class="det-num">2</span><span class="det-label">Ağa Yayınla</span></div>
+          <div class="det-arrow">›</div>
+          <div class="det-step" data-step="2"><span class="det-num">3</span><span class="det-label">Node Oylaması</span></div>
+          <div class="det-arrow">›</div>
+          <div class="det-step" data-step="3"><span class="det-num">4</span><span class="det-label">Karar</span></div>
+        </div>
+
+        <div class="double-grid-new">
+          <!-- SOL: SVG diyagram -->
+          <div class="glass panel wallet-card-new">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <h3 style="margin:0">Cüzdan Diyagramı</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn good" id="sendAyse" type="button">→ Ayşe'ye Gönder</button>
+                <button class="btn good" id="sendMehmet" type="button">→ Mehmet'e Gönder</button>
+                <button class="btn danger" id="doubleSpend" type="button">⚡ İkisine Birden</button>
+                <button class="btn secondary" id="resetDouble" type="button">↺ Sıfırla</button>
+              </div>
+            </div>
+
+            <!-- SVG cüzdan diyagramı -->
+            <svg id="walletSVG" viewBox="0 0 560 320" style="width:100%;border-radius:12px;background:rgba(5,13,24,0.6);">
+              <defs>
+                <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="#36f59f"/>
+                </marker>
+                <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="#ff4268"/>
+                </marker>
+                <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="#ffd166"/>
+                </marker>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <radialGradient id="coinGrad" cx="35%" cy="30%">
+                  <stop offset="0%" stop-color="#fff7b0"/>
+                  <stop offset="50%" stop-color="#ffd166"/>
+                  <stop offset="100%" stop-color="#f3a712"/>
+                </radialGradient>
+                <linearGradient id="aliGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(54,245,159,0.22)"/>
+                  <stop offset="100%" stop-color="rgba(34,217,255,0.08)"/>
+                </linearGradient>
+                <linearGradient id="targetGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(34,217,255,0.15)"/>
+                  <stop offset="100%" stop-color="rgba(34,217,255,0.04)"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Ali cüzdanı (merkez üst) -->
+              <rect x="180" y="20" width="200" height="110" rx="14" fill="url(#aliGrad)" stroke="rgba(54,245,159,0.5)" stroke-width="1.5"/>
+              <text x="280" y="46" text-anchor="middle" fill="#36f59f" font-size="13" font-weight="bold" font-family="monospace">ALİ</text>
+              <text x="280" y="64" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10" font-family="monospace">Gönderen</text>
+              <!-- Coin yığını SVG -->
+              <g id="svgCoins">
+                <!-- Coin 1 -->
+                <ellipse cx="234" cy="102" rx="16" ry="6" fill="#c87f00" opacity="0.7"/>
+                <rect x="218" y="88" width="32" height="14" rx="4" fill="url(#coinGrad)"/>
+                <ellipse cx="234" cy="88" rx="16" ry="6" fill="#fff7b0"/>
+                <text x="234" y="92" text-anchor="middle" fill="#241500" font-size="9" font-weight="900" font-family="monospace">₿</text>
+                <!-- Coin 2 -->
+                <ellipse cx="258" cy="102" rx="16" ry="6" fill="#c87f00" opacity="0.7"/>
+                <rect x="242" y="88" width="32" height="14" rx="4" fill="url(#coinGrad)"/>
+                <ellipse cx="258" cy="88" rx="16" ry="6" fill="#fff7b0"/>
+                <text x="258" y="92" text-anchor="middle" fill="#241500" font-size="9" font-weight="900" font-family="monospace">₿</text>
+                <!-- Coin 3 -->
+                <ellipse cx="282" cy="102" rx="16" ry="6" fill="#c87f00" opacity="0.7"/>
+                <rect x="266" y="88" width="32" height="14" rx="4" fill="url(#coinGrad)"/>
+                <ellipse cx="282" cy="88" rx="16" ry="6" fill="#fff7b0"/>
+                <text x="282" y="92" text-anchor="middle" fill="#241500" font-size="9" font-weight="900" font-family="monospace">₿</text>
+              </g>
+              <text id="aliBalanceText" x="320" y="96" fill="#36f59f" font-size="18" font-weight="900" font-family="monospace">100</text>
+              <text x="320" y="110" fill="rgba(255,255,255,0.4)" font-size="9" font-family="monospace">coin</text>
+
+              <!-- Ok: Ali → Ayşe -->
+              <line id="arrowToAyse" x1="210" y1="130" x2="100" y2="210" stroke="rgba(54,245,159,0.15)" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowGreen)"/>
+
+              <!-- Ok: Ali → Mehmet -->
+              <line id="arrowToMehmet" x1="350" y1="130" x2="460" y2="210" stroke="rgba(54,245,159,0.15)" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowGreen)"/>
+
+              <!-- Ayşe cüzdanı (sol alt) -->
+              <rect x="20" y="210" width="160" height="90" rx="14" fill="url(#targetGrad)" stroke="rgba(34,217,255,0.3)" stroke-width="1.5"/>
+              <text x="100" y="235" text-anchor="middle" fill="#22d9ff" font-size="13" font-weight="bold" font-family="monospace">AYŞE</text>
+              <text x="100" y="252" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="10" font-family="monospace">Alıcı 1</text>
+              <text id="ayseBalanceText" x="100" y="278" text-anchor="middle" fill="#22d9ff" font-size="22" font-weight="900" font-family="monospace">0</text>
+              <text x="100" y="292" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="9" font-family="monospace">coin</text>
+
+              <!-- Mehmet cüzdanı (sağ alt) -->
+              <rect x="380" y="210" width="160" height="90" rx="14" fill="url(#targetGrad)" stroke="rgba(34,217,255,0.3)" stroke-width="1.5"/>
+              <text x="460" y="235" text-anchor="middle" fill="#22d9ff" font-size="13" font-weight="bold" font-family="monospace">MEHMET</text>
+              <text x="460" y="252" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="10" font-family="monospace">Alıcı 2</text>
+              <text id="mehmetBalanceText" x="460" y="278" text-anchor="middle" fill="#22d9ff" font-size="22" font-weight="900" font-family="monospace">0</text>
+              <text x="460" y="292" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="9" font-family="monospace">coin</text>
+
+              <!-- Durum etiketleri -->
+              <text id="ayseStatusSVG" x="100" y="300" text-anchor="middle" fill="rgba(255,255,255,0.0)" font-size="9" font-family="monospace"></text>
+              <text id="mehmetStatusSVG" x="460" y="300" text-anchor="middle" fill="rgba(255,255,255,0.0)" font-size="9" font-family="monospace"></text>
+
+              <!-- Hareketli coin animasyonu (JS tarafından oluşturulacak) -->
+              <circle id="movingCoin" cx="-50" cy="-50" r="14" fill="url(#coinGrad)" opacity="0" filter="url(#glow)">
+                <title>Transfer edilen coin</title>
+              </circle>
+              <text id="movingCoinText" x="-50" y="-45" text-anchor="middle" fill="#241500" font-size="10" font-weight="900" font-family="monospace" opacity="0">₿</text>
+            </svg>
+
+            <!-- Dedektif mesaj kutusu -->
+            <div id="detectiveMsg" style="margin-top:12px;padding:12px 16px;border-radius:var(--radius);background:rgba(34,217,255,0.07);border:1px solid rgba(34,217,255,0.2);color:var(--muted);font-size:0.9rem;line-height:1.6;min-height:48px;"></div>
+          </div>
+
+          <!-- SAĞ: Node oylaması + İşlem geçmişi -->
+          <div style="display:grid;gap:16px;align-content:start;">
+
+            <!-- Node oylaması -->
+            <div class="glass panel">
+              <h3 style="margin-bottom:12px;">🔍 Node Oylaması</h3>
+              <div class="node-vote-grid" id="voteGrid"></div>
+              <div id="voteVerdict" style="margin-top:10px;font-size:0.85rem;color:var(--muted);min-height:20px;text-align:center;"></div>
+            </div>
+
+            <!-- Doğrulama adımları -->
+            <div class="glass panel">
+              <h3 style="margin-bottom:10px;">📋 Doğrulama Adımları</h3>
+              <div class="verify-steps" id="verifySteps"></div>
+            </div>
+
+            <!-- İşlem geçmişi -->
+            <div class="glass panel">
+              <h3 style="margin-bottom:10px;">📦 İşlem Geçmişi</h3>
+              <div class="tx-list" id="txList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="factors" aria-labelledby="factorsTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">6. özet kartları</div>
+            <h2 id="factorsTitle">Zincir Güvenliğini Etkileyen Faktörler</h2>
+            <p class="section-lead">Güvenli bir blokzincir, tek bir özellikten değil; birçok parçanın birlikte çalışmasından güç alır.</p>
+          </div>
+        </div>
+
+        <div class="factor-grid" id="factorGrid"></div>
+      </section>
+
+      <section class="section" id="quiz" aria-labelledby="quizTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">7. mini güvenlik testi</div>
+            <h2 id="quizTitle">Öğrendiklerini Test Et</h2>
+            <p class="section-lead">5 kısa soru ile blokzincir güvenliğinin temel fikirlerini kontrol edin.</p>
+          </div>
+        </div>
+
+        <div class="glass panel quiz-panel">
+          <div id="quizQuestions"></div>
+          <div class="control-row">
+            <button class="btn" id="checkQuiz" type="button">Sonucu Göster</button>
+            <button class="btn secondary" id="resetQuiz" type="button">Testi Sıfırla</button>
+          </div>
+          <div class="quiz-result" id="quizResult" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="section" id="result" aria-labelledby="resultTitle">
+        <div class="section-header">
+          <div>
+            <div class="section-kicker">8. sonuç</div>
+            <h2 id="resultTitle">Blokzincir Sadece Kripto Para Değildir</h2>
+            <p class="section-lead">Bu yapı, verinin sonradan değiştirilmesini zorlaştırdığı için birçok alanda güvenlik fikri sunar.</p>
+          </div>
+        </div>
+
+        <div class="conclusion">
+          <div class="glass panel conclusion-badge">
+            <strong>Güven = Dağıtık Kontrol</strong>
+          </div>
+          <div class="glass panel takeaways">
+            <div class="takeaway"><span>1</span><p>Blokzincir sadece kripto para değildir; belge, kayıt, tedarik zinciri ve veri güvenliği gibi alanlarda da kullanılabilir.</p></div>
+            <div class="takeaway"><span>2</span><p>Hash sistemi, verideki küçük değişiklikleri bile fark edilir hale getirir.</p></div>
+            <div class="takeaway"><span>3</span><p>Merkeziyetsiz yapı, tek bir noktanın bozulmasıyla tüm sistemin çökmesini zorlaştırır.</p></div>
+            <div class="takeaway"><span>4</span><p>Güçlü ve geniş node ağı, saldırıları daha pahalı ve daha zor hale getirir.</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer-note">
+      <strong style="color:var(--text)">Güvenli Halkalar</strong> &nbsp;·&nbsp; TÜBİTAK 4006-B Ortaokul Araştırma Projesi &nbsp;·&nbsp; Konu: Blokzincirde Zincir Güvenliği<br>
+      <span style="margin-top:6px;display:inline-block">Danışman Öğretmen: <strong style="color:var(--cyan)">Hüseyin ÇAKMAK</strong> &nbsp;·&nbsp; Projede Yer Alan Öğrenciler: <strong style="color:var(--cyan)">Yasin ÇAMURLU, Ceren ÇELİK</strong> &nbsp;·&nbsp; Okul: <strong style="color:var(--cyan)">TOKİ Örnek Ortaokulu</strong></span>
+    </footer>
+  </div>
+
+  <script>
+    /*
+      JavaScript bölümü modüler küçük fonksiyonlardan oluşur.
+      Simülasyonlar eğitim amaçlıdır; kriptografik güvenlik sağlamaz.
+    */
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    const hexChars = "0123456789abcdef";
+    let soundEnabled = false;
+    let audioContext = null;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function shortHash(hash) {
+      return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
+    }
+
+    function fakeHash(input) {
+      /*
+        Sahte ama gerçekçi görünen 64 karakterlik hash üretir.
+        FNV benzeri karıştırma ve birkaç tur bit işlemi kullanır.
+      */
+      let a = 0x811c9dc5;
+      let b = 0x9e3779b9;
+      let c = 0x85ebca6b;
+      let d = 0xc2b2ae35;
+
+      for (let i = 0; i < input.length; i += 1) {
+        const code = input.charCodeAt(i) + i * 31;
+        a ^= code;
+        a = Math.imul(a, 0x01000193);
+        b = Math.imul(b ^ (code << (i % 7)), 0x27d4eb2d);
+        c = (c + Math.imul(code ^ a, 0x165667b1)) | 0;
+        d = Math.imul(d + code + b, 0x85ebca77);
+      }
+
+      let seed = [a, b, c, d];
+      let output = "";
+      for (let i = 0; i < 64; i += 1) {
+        const k = i % 4;
+        seed[k] ^= seed[(k + 1) % 4] >>> 7;
+        seed[k] = Math.imul(seed[k] + i + input.length, 0x9e3779b1);
+        output += hexChars[(seed[k] >>> ((i % 8) * 4)) & 15];
+      }
+      return output;
+    }
+
+    function playTone(type = "click") {
+      if (!soundEnabled) return;
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const now = audioContext.currentTime;
+      const map = {
+        click: [420, 0.06, "sine", 0.035],
+        good: [640, 0.10, "triangle", 0.045],
+        danger: [150, 0.18, "sawtooth", 0.040],
+        data: [820, 0.08, "square", 0.025]
+      };
+      const [freq, duration, wave, volume] = map[type] || map.click;
+      oscillator.type = wave;
+      oscillator.frequency.setValueAtTime(freq, now);
+      oscillator.frequency.exponentialRampToValueAtTime(Math.max(70, freq * 0.62), now + duration);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+    }
+
+    $("#soundToggle").addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      $("#soundToggle").textContent = `Ses: ${soundEnabled ? "Açık" : "Kapalı"}`;
+      playTone("good");
+    });
+
+    $("#startSimulation").addEventListener("click", () => {
+      $("#chain").scrollIntoView({ behavior: "smooth", block: "start" });
+      playTone("good");
+    });
+
+    // Arka plan canvas ağı: yumuşak hareketli noktalar ve bağlantılar.
+    const canvas = $("#networkCanvas");
+    const ctx = canvas.getContext("2d");
+    const particles = [];
+    const particleCount = 72;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * window.devicePixelRatio;
+      canvas.height = window.innerHeight * window.devicePixelRatio;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    }
+
+    function seedParticles() {
+      particles.length = 0;
+      for (let i = 0; i < particleCount; i += 1) {
+        particles.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 0.55,
+          vy: (Math.random() - 0.5) * 0.55,
+          r: Math.random() * 1.8 + 0.7
+        });
+      }
+    }
+
+    function drawNetworkBackground() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.fillStyle = "#050812";
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > window.innerWidth) p.vx *= -1;
+        if (p.y < 0 || p.y > window.innerHeight) p.vy *= -1;
+      }
+
+      for (let i = 0; i < particles.length; i += 1) {
+        for (let j = i + 1; j < particles.length; j += 1) {
+          const a = particles[i];
+          const b = particles[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 145) {
+            const alpha = (1 - dist / 145) * 0.24;
+            ctx.strokeStyle = `rgba(34, 217, 255, ${alpha})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (const p of particles) {
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 8);
+        gradient.addColorStop(0, "rgba(54, 245, 159, 0.70)");
+        gradient.addColorStop(1, "rgba(34, 217, 255, 0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(drawNetworkBackground);
+    }
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      seedParticles();
+      renderNodeNetwork();
+    });
+
+    resizeCanvas();
+    seedParticles();
+    drawNetworkBackground();
+
+    // Blokzincir simülasyonu.
+    let chain = [];
+    let transactionCounter = 1;
+
+    function createBlock(data, prev = "0000000000000000") {
+      const block = {
+        index: chain.length + 1,
+        prev,
+        data,
+        nonce: Math.floor(Math.random() * 9000) + 1000,
+        tampered: false
+      };
+      block.hash = fakeHash(`${block.index}|${block.prev}|${block.data}|${block.nonce}`);
+      return block;
+    }
+
+    function seedChain() {
+      chain = [];
+      chain.push(createBlock("Genesis: İlk güvenli kayıt", "0000000000000000"));
+      chain.push(createBlock("Ali -> Ayşe: 10 coin", chain[0].hash));
+      chain.push(createBlock("Okul laboratuvar kaydı eklendi", chain[1].hash));
+      chain.push(createBlock("Mehmet -> Zeynep: 5 coin", chain[2].hash));
+      transactionCounter = 5;
+      renderChain();
+    }
+
+    function renderChain() {
+      const track = $("#chainTrack");
+      track.innerHTML = "";
+      let invalidFrom = -1;
+
+      chain.forEach((block, i) => {
+        const expectedHash = fakeHash(`${block.index}|${block.prev}|${block.data}|${block.nonce}`);
+        const prevMismatch = i > 0 && block.prev !== chain[i - 1].hash;
+        const hashMismatch = expectedHash !== block.hash;
+        const invalid = block.tampered || hashMismatch || prevMismatch || (invalidFrom !== -1 && i >= invalidFrom);
+        if ((block.tampered || hashMismatch || prevMismatch) && invalidFrom === -1) invalidFrom = i + 1;
+
+        const card = document.createElement("article");
+        card.className = `block-card ${block.tampered ? "tampered" : ""} ${invalid && i > 0 ? "invalid" : ""}`;
+        card.innerHTML = `
+          <div class="block-head">
+            <span>Blok</span>
+            <span class="block-badge">${block.index}</span>
+          </div>
+          <div class="hash-line"><strong>Önceki hash</strong><span class="mono">${shortHash(block.prev)}</span></div>
+          <div class="hash-line"><strong>Veri</strong><span>${block.data}</span></div>
+          <div class="hash-line"><strong>Hash</strong><span class="mono">${shortHash(block.hash)}</span></div>
+        `;
+        track.appendChild(card);
+      });
+
+      const isValid = invalidFrom === -1 && chain.every((block, i) => i === 0 || block.prev === chain[i - 1].hash);
+      $("#chainStatus").textContent = isValid ? "Zincir geçerli" : "Zincir kırıldı";
+      $("#chainStatus").classList.toggle("bad", !isValid);
+      $("#blockCount").textContent = chain.length;
+      $("#lastHash").textContent = shortHash(chain[chain.length - 1].hash);
+    }
+
+    $("#addBlock").addEventListener("click", () => {
+      const data = `Yeni kayıt #${transactionCounter}: veri doğrulandı`;
+      const block = createBlock(data, chain[chain.length - 1].hash);
+      chain.push(block);
+      transactionCounter += 1;
+      renderChain();
+      $("#chainTrack").scrollTo({ left: $("#chainTrack").scrollWidth, behavior: "smooth" });
+      playTone("good");
+    });
+
+    $("#tamperBlock").addEventListener("click", () => {
+      if (chain.length < 2) return;
+      chain[1].data = "Sahte değişiklik: 999 coin";
+      chain[1].tampered = true;
+      chain[1].hash = fakeHash(`${chain[1].index}|${chain[1].prev}|${chain[1].data}|${chain[1].nonce}`);
+      renderChain();
+      playTone("danger");
+    });
+
+    $("#repairChain").addEventListener("click", () => {
+      chain.forEach((block, i) => {
+        block.prev = i === 0 ? "0000000000000000" : chain[i - 1].hash;
+        block.hash = fakeHash(`${block.index}|${block.prev}|${block.data}|${block.nonce}`);
+        block.tampered = false;
+      });
+      renderChain();
+      playTone("good");
+    });
+
+    seedChain();
+
+    // Hash laboratuvarı — gerçek SHA-256 (Web Crypto API).
+    let hashTimer = null;
+    let prevHash = null;
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function scrambleHash(finalHash, frame) {
+      return finalHash
+        .split("")
+        .map((char, index) => (index < frame * 5 ? char : hexChars[Math.floor(Math.random() * 16)]))
+        .join("");
+    }
+
+    function renderAvalanche(oldHash, newHash) {
+      if (!oldHash || oldHash === newHash) {
+        $("#avalancheBox").style.display = "none";
+        return;
+      }
+      const diffCount = [...oldHash].filter((c, i) => c !== newHash[i]).length;
+      const prevEl = $("#prevHashDisplay");
+      const newEl = $("#newHashDisplay");
+
+      // Farklı karakterleri amber ile işaretle
+      prevEl.innerHTML = [...oldHash].map((c, i) => oldHash[i] !== newHash[i]
+        ? `<span style="color:var(--amber);background:rgba(255,210,50,0.18);border-radius:2px;padding:0 1px">${c}</span>` : c).join("");
+      newEl.innerHTML = [...newHash].map((c, i) => oldHash[i] !== newHash[i]
+        ? `<span style="color:var(--green);background:rgba(54,245,159,0.18);border-radius:2px;padding:0 1px">${c}</span>` : c).join("");
+
+      $("#diffCount").textContent = diffCount;
+      $("#avalancheBox").style.display = "block";
+    }
+
+    async function updateHashLab() {
+      const value = $("#hashInput").value;
+      const finalHash = await sha256(value);
+      const box = $("#hashOutputBox");
+      const result = $("#hashResult");
+      let frame = 0;
+      clearInterval(hashTimer);
+      box.classList.remove("generating");
+      void box.offsetWidth;
+      box.classList.add("generating");
+      hashTimer = setInterval(() => {
+        frame += 1;
+        result.textContent = scrambleHash(finalHash, frame);
+        if (frame >= 14) {
+          clearInterval(hashTimer);
+          result.textContent = finalHash;
+          renderAvalanche(prevHash, finalHash);
+          prevHash = finalHash;
+        }
+      }, 34);
+      playTone("data");
+    }
+
+    $("#hashInput").addEventListener("input", updateHashLab);
+    updateHashLab();
+
+    // Node ağı simülasyonu — geliştirilmiş.
+    let nodes = [];
+    let nodeId = 1;
+    const nodeLog = [];
+    const healthHistory = [];
+
+    // Her node'a şehir ismi
+    const NODE_CITY_NAMES = ["İstanbul","Ankara","Berlin","Tokyo","NewYork","Londra","Dubai","Sydney","Paris","Moskova","Seoul","Lagos"];
+    const NODE_LAST_PACKET = {}; // nodeId → timestamp
+
+    function seedNodes() {
+      nodes = [];
+      nodeId = 1;
+      for (let i = 0; i < 7; i++) {
+        nodes.push({ id: nodeId, status: "active", x: 50, y: 50, name: NODE_CITY_NAMES[nodeId-1] || `N${nodeId}` });
+        nodeId++;
+      }
+      layoutNodes();
+      addNodeLog("Ağ başlatıldı: 7 aktif node veri paylaşmaya hazır.");
+      renderNodeNetwork();
+    }
+
+    function layoutNodes() {
+      const fixedSlots = [
+        { x: 50, y: 14 },
+        { x: 79, y: 30 },
+        { x: 79, y: 62 },
+        { x: 50, y: 78 },
+        { x: 21, y: 62 },
+        { x: 21, y: 30 },
+        { x: 50, y: 46 },
+        { x: 89, y: 46 },
+        { x: 11, y: 46 }
+      ];
+      nodes.forEach((node, index) => {
+        if (index < fixedSlots.length) {
+          node.x = fixedSlots[index].x;
+          node.y = fixedSlots[index].y;
+        } else {
+          const angle = -Math.PI/2 + (Math.PI*2*(index-fixedSlots.length)) / Math.max(nodes.length-fixedSlots.length,1);
+          node.x = clamp(50+Math.cos(angle)*24, 16, 84);
+          node.y = clamp(46+Math.sin(angle)*24, 16, 84);
+        }
+        if (!node.name) node.name = NODE_CITY_NAMES[index] || `N${node.id}`;
+      });
+    }
+
+    function addNodeLog(message) {
+      nodeLog.unshift(message);
+      while (nodeLog.length > 4) nodeLog.pop();
+      $("#nodeLog").innerHTML = nodeLog.map(item => `<span>${item}</span>`).join("");
+    }
+
+    function nodeStatusLabel(status) {
+      return { active:"aktif", corrupt:"bozuk", offline:"kapalı" }[status] || status;
+    }
+
+    function nodeHealth() {
+      if (!nodes.length) return 0;
+      const active = nodes.filter(n => n.status==="active").length;
+      const corrupt = nodes.filter(n => n.status==="corrupt").length;
+      return Math.round(clamp(((active*100)+(corrupt*35))/(nodes.length*100)*100, 0, 100));
+    }
+
+    function updateConnCounter() {
+      const online = nodes.filter(n => n.status !== "offline").length;
+      const conns = online * (online-1) / 2;
+      const el = $("#connCount");
+      if (el) el.textContent = conns;
+    }
+
+    // Mini sağlık grafiği
+    function pushHealthHistory() {
+      healthHistory.push(nodeHealth());
+      if (healthHistory.length > 40) healthHistory.shift();
+      drawHealthChart();
+    }
+
+    function drawHealthChart() {
+      const canvas = $("#healthChart");
+      if (!canvas) return;
+      const ctx2 = canvas.getContext("2d");
+      const w = canvas.offsetWidth || 240;
+      const h = canvas.offsetHeight || 52;
+      canvas.width = w; canvas.height = h;
+      ctx2.clearRect(0,0,w,h);
+
+      if (healthHistory.length < 2) return;
+      const max = 40;
+      const pts = healthHistory.slice(-max);
+
+      // Fill gradient
+      const grad = ctx2.createLinearGradient(0,0,0,h);
+      grad.addColorStop(0,"rgba(54,245,159,0.35)");
+      grad.addColorStop(1,"rgba(54,245,159,0)");
+
+      ctx2.beginPath();
+      pts.forEach((v,i) => {
+        const x = (i/(max-1))*w;
+        const y = h - (v/100)*h*0.88 - 4;
+        i===0 ? ctx2.moveTo(x,y) : ctx2.lineTo(x,y);
+      });
+      ctx2.lineTo(w,h); ctx2.lineTo(0,h); ctx2.closePath();
+      ctx2.fillStyle = grad; ctx2.fill();
+
+      // Line
+      ctx2.beginPath();
+      pts.forEach((v,i) => {
+        const x = (i/(max-1))*w;
+        const y = h - (v/100)*h*0.88 - 4;
+        i===0 ? ctx2.moveTo(x,y) : ctx2.lineTo(x,y);
+      });
+      ctx2.strokeStyle = "#36f59f";
+      ctx2.lineWidth = 1.5;
+      ctx2.stroke();
+
+      // %51 kırmızı çizgi
+      const dangerY = h - 0.51*h*0.88 - 4;
+      ctx2.setLineDash([4,4]);
+      ctx2.strokeStyle = "rgba(255,66,104,0.5)";
+      ctx2.lineWidth = 1;
+      ctx2.beginPath(); ctx2.moveTo(0,dangerY); ctx2.lineTo(w,dangerY); ctx2.stroke();
+      ctx2.setLineDash([]);
+    }
+
+    // Tooltip göster/gizle
+    function showNodeTooltip(node, svgEl) {
+      const tooltip = $("#nodeTooltip");
+      if (!tooltip) return;
+      const svgRect = svgEl.getBoundingClientRect();
+      const mapRect = svgEl.closest(".node-map").getBoundingClientRect();
+      // SVG viewBox → pixel dönüşümü
+      const vb = svgEl.viewBox.baseVal;
+      const scaleX = svgRect.width / vb.width;
+      const scaleY = svgRect.height / vb.height;
+      const px = (node.x - vb.x) * scaleX + svgRect.left - mapRect.left;
+      const py = (node.y - vb.y) * scaleY + svgRect.top - mapRect.top;
+
+      const online = nodes.filter(n => n.status !== "offline" && n.id !== node.id).length;
+      const lastPacket = NODE_LAST_PACKET[node.id] ? `${Math.round((Date.now()-NODE_LAST_PACKET[node.id])/1000)} sn önce` : "—";
+      const statusColor = node.status==="active"?"var(--green)":node.status==="corrupt"?"var(--red)":"var(--muted)";
+
+      tooltip.innerHTML = `
+        <strong style="display:block;margin-bottom:4px;">${node.name}</strong>
+        Durum: <strong style="color:${statusColor}">${nodeStatusLabel(node.status)}</strong><br>
+        Bağlantı: <strong style="color:var(--cyan)">${online}</strong> node<br>
+        Son paket: ${lastPacket}<br>
+        <span style="color:var(--muted);font-size:0.75rem;">Tıkla: durumu değiştir</span>`;
+
+      tooltip.style.display = "block";
+      tooltip.style.left = px + "px";
+      tooltip.style.top = py + "px";
+    }
+
+    function hideNodeTooltip() {
+      const tooltip = $("#nodeTooltip");
+      if (tooltip) tooltip.style.display = "none";
+    }
+
+    function renderNodeNetwork() {
+      const linkLayer = $("#nodeLinks");
+      const nodeLayer = $("#nodeLayer");
+      const packetLayer = $("#packetLayer");
+      const svgEl = $("#nodeSvg");
+      linkLayer.innerHTML = "";
+      nodeLayer.innerHTML = "";
+      if (packetLayer) packetLayer.innerHTML = "";
+
+      const onlineNodes = nodes.filter(n => n.status !== "offline");
+
+      // Bağlantılar
+      for (let i=0; i<onlineNodes.length; i++) {
+        for (let j=i+1; j<onlineNodes.length; j++) {
+          const s = onlineNodes[i], t = onlineNodes[j];
+          const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+          line.classList.add("node-link");
+          line.setAttribute("x1",s.x); line.setAttribute("y1",s.y);
+          line.setAttribute("x2",t.x); line.setAttribute("y2",t.y);
+          if (s.status==="corrupt"||t.status==="corrupt") line.classList.add("corrupt");
+          linkLayer.appendChild(line);
+        }
+      }
+
+      // Node'lar
+      nodes.forEach(node => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+        g.classList.add("svg-node", node.status);
+        if (node.id===7) g.classList.add("central");
+        g.setAttribute("tabindex","0");
+        g.setAttribute("role","button");
+        g.setAttribute("aria-label",`${node.name} — ${nodeStatusLabel(node.status)}`);
+
+        const r = node.id===7 ? 7.0 : 6.2;
+
+        // Pulse halkası (sadece aktif ve bozuk node'larda)
+        if (node.status !== "offline") {
+          const ring = document.createElementNS("http://www.w3.org/2000/svg","circle");
+          ring.setAttribute("cx",node.x); ring.setAttribute("cy",node.y); ring.setAttribute("r",r);
+          ring.classList.add("pulse-ring");
+          if (node.status==="corrupt") ring.classList.add("corrupt-ring");
+
+          // r değerini SVG animate ile büyüt — transform kullanmıyoruz
+          const animR = document.createElementNS("http://www.w3.org/2000/svg","animate");
+          animR.setAttribute("attributeName","r");
+          animR.setAttribute("from", r);
+          animR.setAttribute("to", r * 2.4);
+          animR.setAttribute("dur","2s");
+          animR.setAttribute("begin", `${(node.id*0.37)%2}s`);
+          animR.setAttribute("repeatCount","indefinite");
+          animR.setAttribute("calcMode","spline");
+          animR.setAttribute("keySplines","0.2 0.8 0.4 1");
+
+          const animO = document.createElementNS("http://www.w3.org/2000/svg","animate");
+          animO.setAttribute("attributeName","opacity");
+          animO.setAttribute("from","0.6");
+          animO.setAttribute("to","0");
+          animO.setAttribute("dur","2s");
+          animO.setAttribute("begin", `${(node.id*0.37)%2}s`);
+          animO.setAttribute("repeatCount","indefinite");
+          animO.setAttribute("calcMode","spline");
+          animO.setAttribute("keySplines","0.2 0.8 0.4 1");
+
+          ring.appendChild(animR);
+          ring.appendChild(animO);
+          g.appendChild(ring);
+        }
+
+        // Ana daire
+        const circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+        circle.setAttribute("cx",node.x); circle.setAttribute("cy",node.y); circle.setAttribute("r",r);
+        const fillColor = node.status==="corrupt"?"#ff4268":node.status==="offline"?"#455364":"#36f59f";
+        const strokeColor = node.status==="corrupt"?"#ffb7c5":node.status==="offline"?"#9db8c7":"#edfff9";
+        circle.setAttribute("fill",fillColor);
+        circle.setAttribute("stroke",strokeColor);
+        circle.setAttribute("stroke-width",node.id===7?"1.8":"1.2");
+
+        // Şehir kısaltması (ilk 3 harf)
+        const abbr = node.name.substring(0,3).toUpperCase();
+        const label = document.createElementNS("http://www.w3.org/2000/svg","text");
+        label.setAttribute("x",node.x); label.setAttribute("y",node.y+0.4);
+        label.setAttribute("fill",node.status==="offline"?"#cdd":"corrupt"?"#fff7fa":"#00140b");
+        label.setAttribute("style","font-weight:900;font-size:3.6px;text-anchor:middle;dominant-baseline:middle;pointer-events:none;");
+        label.textContent = abbr;
+
+        g.appendChild(circle);
+        g.appendChild(label);
+
+        // Tooltip events
+        g.addEventListener("mouseenter", () => showNodeTooltip(node, svgEl));
+        g.addEventListener("mouseleave", hideNodeTooltip);
+        g.addEventListener("click", () => { cycleNode(node.id); hideNodeTooltip(); });
+        g.addEventListener("keydown", e => {
+          if (e.key==="Enter"||e.key===" ") { e.preventDefault(); cycleNode(node.id); }
+        });
+
+        nodeLayer.appendChild(g);
+      });
+
+      // Sağlık + bağlantı
+      const health = nodeHealth();
+      $("#healthValue").textContent = `${health}%`;
+      $("#healthFill").style.width = `${health}%`;
+      updateConnCounter();
+      pushHealthHistory();
+    }
+
+    function cycleNode(id) {
+      const node = nodes.find(n => n.id===id);
+      if (!node) return;
+      const order = ["active","corrupt","offline"];
+      node.status = order[(order.indexOf(node.status)+1)%order.length];
+      addNodeLog(`${node.name} durumu değişti: ${nodeStatusLabel(node.status)}.`);
+      renderNodeNetwork();
+      playTone(node.status==="corrupt"?"danger":"click");
+    }
+
+    function launchPackets(options={}) {
+      const shouldLog = options.log !== false;
+      const online = nodes.filter(n => n.status !== "offline");
+      const packetLayer = $("#packetLayer");
+      if (online.length < 2) {
+        if (shouldLog) addNodeLog("Veri yayılımı için en az iki çevrim içi node gerekir.");
+        return;
+      }
+      if (packetLayer) packetLayer.innerHTML = "";
+
+      const routes = [];
+      for (let i=0; i<online.length; i++)
+        for (let j=0; j<online.length; j++)
+          if (i!==j) routes.push([online[i],online[j]]);
+
+      routes.forEach(([source,target],index) => {
+        const packet = document.createElementNS("http://www.w3.org/2000/svg","circle");
+        packet.classList.add("packet");
+        if (source.status==="corrupt") packet.classList.add("corrupt-packet");
+        packet.setAttribute("r","1.2");
+        packet.setAttribute("cx",source.x); packet.setAttribute("cy",source.y);
+        if (packetLayer) packetLayer.appendChild(packet);
+
+        const duration = 820 + (index%online.length)*70;
+        const start = performance.now() + index*18;
+        function step(now) {
+          const progress = clamp((now-start)/duration, 0, 1);
+          const eased = 1-Math.pow(1-progress,3);
+          packet.setAttribute("cx", source.x+(target.x-source.x)*eased);
+          packet.setAttribute("cy", source.y+(target.y-source.y)*eased);
+          packet.setAttribute("opacity", progress<1?"1":"0");
+          if (progress<1) { requestAnimationFrame(step); }
+          else {
+            NODE_LAST_PACKET[target.id] = Date.now();
+            packet.remove();
+          }
+        }
+        requestAnimationFrame(step);
+      });
+
+      if (shouldLog) addNodeLog("Veri paketleri node'lar arasında yayıldı.");
+      playTone("data");
+    }
+
+    $("#propagateData").addEventListener("click", launchPackets);
+
+    $("#addNode").addEventListener("click", () => {
+      const newName = NODE_CITY_NAMES[nodeId-1] || `N${nodeId}`;
+      nodes.push({ id:nodeId, status:"active", x:50, y:50, name:newName });
+      nodeId++;
+      layoutNodes();
+      addNodeLog(`${newName} ağa katıldı. Bağlantı sayısı: ${nodes.filter(n=>n.status!=="offline").length*(nodes.filter(n=>n.status!=="offline").length-1)/2}`);
+      renderNodeNetwork();
+      launchPackets({log:false});
+      playTone("good");
+    });
+
+    $("#shutdownNode").addEventListener("click", () => {
+      const target = nodes.slice().reverse().find(n => n.status==="active");
+      if (target) {
+        target.status = "offline";
+        addNodeLog(`${target.name} kapatıldı; ağ yedek bağlantıları kullanıyor.`);
+        renderNodeNetwork();
+        playTone("click");
+      } else {
+        addNodeLog("Kapatılacak aktif node kalmadı.");
+        playTone("danger");
+      }
+    });
+
+    $("#corruptNode").addEventListener("click", () => {
+      const target = nodes.find(n => n.status==="active");
+      if (target) {
+        target.status = "corrupt";
+        addNodeLog(`${target.name} bozuldu; diğer node'lar veriyi karşılaştırıyor.`);
+        renderNodeNetwork();
+        playTone("danger");
+      } else {
+        addNodeLog("Bozulacak aktif node kalmadı.");
+        playTone("danger");
+      }
+    });
+
+    $("#strengthenNetwork").addEventListener("click", () => {
+      nodes.filter(n => n.status!=="active").forEach((node,i) => { if(i<2) node.status="active"; });
+      const newName = NODE_CITY_NAMES[nodeId-1] || `N${nodeId}`;
+      nodes.push({ id:nodeId, status:"active", x:50, y:50, name:newName });
+      nodeId++;
+      layoutNodes();
+      addNodeLog("Ağ güçlendirildi: bozuk node'lar izole edildi ve yeni node eklendi.");
+      renderNodeNetwork();
+      launchPackets({log:false});
+      playTone("good");
+    });
+
+    seedNodes();
+    setInterval(() => { launchPackets({log:false}); }, 5200);
+    setInterval(() => { pushHealthHistory(); }, 3000);
+
+    // %51 saldırısı simülasyonu.
+    let miners = [
+      { name: "M1", power: 12 },
+      { name: "M2", power: 11 },
+      { name: "M3", power: 10 },
+      { name: "M4", power: 9 },
+      { name: "M5", power: 12 },
+      { name: "M6", power: 13 },
+      { name: "M7", power: 8 },
+      { name: "M8", power: 10 },
+      { name: "M9", power: 15 }
+    ];
+    let attackerCount = 0;
+
+    function attackerPercent() {
+      const total = miners.reduce((sum, miner) => sum + miner.power, 0);
+      const attacker = miners.slice(0, attackerCount).reduce((sum, miner) => sum + miner.power, 0);
+      return Math.round((attacker / total) * 100);
+    }
+
+    function renderAttack() {
+      const field = $("#minerField");
+      field.innerHTML = "";
+      const total = miners.reduce((sum, miner) => sum + miner.power, 0);
+      const percent = attackerPercent();
+      const honestPercent = 100 - percent;
+      const danger = percent >= 51;
+
+      miners.forEach((miner, index) => {
+        const share = Math.round((miner.power / total) * 100);
+        const card = document.createElement("article");
+        card.className = `miner ${index < attackerCount ? "attacker" : ""}`;
+        const pickaxeSVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+  <defs>
+    <linearGradient id="wg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8B5E2A"/><stop offset="50%" stop-color="#C48A3F"/><stop offset="100%" stop-color="#7A4F1E"/></linearGradient>
+    <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7FFFD4"/><stop offset="45%" stop-color="#22D9C8"/><stop offset="100%" stop-color="#0AADA0"/></linearGradient>
+  </defs>
+  <g transform="translate(12,12) rotate(-40)">
+    <rect x="-2.5" y="-9" width="5" height="14" rx="1.5" fill="url(#wg)"/>
+    <rect x="-2.5" y="-9" width="1.5" height="14" rx="1" fill="rgba(255,255,255,0.22)"/>
+    <g transform="translate(0,-9)">
+      <rect x="-7" y="-4" width="14" height="8" rx="1" fill="url(#cg)"/>
+      <rect x="-7" y="-4" width="14" height="3" rx="1" fill="rgba(127,255,212,0.45)"/>
+      <polygon points="-7,-4 -7,4 -13,0" fill="#0AADA0"/>
+      <polygon points="-7,-4 -13,0 -10,-4" fill="#22D9C8"/>
+      <line x1="-7" y1="-4" x2="-12" y2="-1" stroke="rgba(255,255,255,0.4)" stroke-width="0.7" stroke-linecap="round"/>
+      <polygon points="7,-4 7,4 13,1 11,6 7,4" fill="#0AADA0"/>
+      <polygon points="7,-4 13,1 10,-4" fill="#22D9C8"/>
+      <rect x="-2.5" y="-5" width="5" height="10" rx="1" fill="#0AADA0"/>
+      <circle cx="0" cy="0" r="1.8" fill="#0D8A80"/>
+      <circle cx="0" cy="0" r="1" fill="rgba(127,255,212,0.7)"/>
+    </g>
+  </g>
+</svg>`;
+
+        const thiefSVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- beanie hat -->
+  <path d="M5 10 C5 6 8 3 12 3 C16 3 19 6 19 10 L19 11 L5 11 Z" fill="#1a1a2e" stroke="#ff4268" stroke-width="0.9"/>
+  <rect x="4" y="10" width="16" height="2.5" rx="1.2" fill="#ff4268"/>
+  <!-- face -->
+  <path d="M7 11 L7 17 C7 20 17 20 17 17 L17 11 Z" fill="#ffe4c8"/>
+  <!-- mask across eyes -->
+  <rect x="6" y="12.5" width="12" height="4.5" rx="2.2" fill="#1a1a2e"/>
+  <!-- eye holes -->
+  <ellipse cx="9.5" cy="14.7" rx="1.5" ry="1.2" fill="#ff4268"/>
+  <ellipse cx="14.5" cy="14.7" rx="1.5" ry="1.2" fill="#ff4268"/>
+  <!-- nose & mouth -->
+  <circle cx="12" cy="18" r="0.7" fill="#e8a882"/>
+  <path d="M10 19.5 Q12 21 14 19.5" stroke="#c0806a" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+</svg>`;
+
+        const icon = index < attackerCount
+          ? `<span class="thief-icon" aria-hidden="true">${thiefSVG}</span>`
+          : `<span class="pickaxe-icon" aria-hidden="true">${pickaxeSVG}</span>`;
+        card.innerHTML = `
+          <div class="miner-name"><span>${miner.name}</span><span class="miner-icon" title="${index < attackerCount ? "Saldırgan madenci" : "Dürüst madenci"}">${icon}</span></div>
+          <div class="small">${index < attackerCount ? "Saldırgan" : "Dürüst"} madenci</div>
+          <div class="power-bar"><span style="width:${share * 4}%"></span></div>
+          <strong>${share}% güç</strong>
+        `;
+        field.appendChild(card);
+      });
+
+      $("#attackerPowerLabel").textContent = `${percent}%`;
+      $("#honestPowerLabel").textContent = `${honestPercent}%`;
+      $("#attackerPowerFill").style.width = `${percent}%`;
+      $("#honestPowerFill").style.width = `${honestPercent}%`;
+      $("#attackDonut").style.background = `conic-gradient(var(--red) 0deg ${percent * 3.6}deg, var(--green) ${percent * 3.6}deg 360deg)`;
+      $("#attackDonut").dataset.label = `${percent}%`;
+      $("#attackArena").classList.toggle("danger-mode", danger);
+      $("#attackStatus").textContent = danger ? "AĞ TEHLİKEDE" : "Ağ güvende";
+      $("#attackStatus").classList.toggle("bad", danger);
+      $("#attackExplanation").textContent = danger
+        ? "Saldırgan güç %51'i geçti. Simülasyonda sahte blok üretimi başladı ve ağ alarm veriyor."
+        : "Saldırgan gücü %51 altında kaldığında ağ çoğunluğu sahte bloğu reddeder.";
+    }
+
+    $("#increaseAttackers").addEventListener("click", () => {
+      attackerCount = clamp(attackerCount + 1, 0, miners.length);
+      renderAttack();
+      playTone(attackerPercent() >= 51 ? "danger" : "click");
+    });
+
+    $("#decreaseAttackers").addEventListener("click", () => {
+      attackerCount = clamp(attackerCount - 1, 0, miners.length);
+      renderAttack();
+      playTone("click");
+    });
+
+    $("#attackDemo").addEventListener("click", () => {
+      attackerCount = 0;
+      const timer = setInterval(() => {
+        attackerCount += 1;
+        renderAttack();
+        if (attackerPercent() >= 51 || attackerCount >= miners.length) {
+          clearInterval(timer);
+          playTone("danger");
+        }
+      }, 360);
+    });
+
+    $("#defendDemo").addEventListener("click", () => {
+      miners.push({ name: `M${miners.length + 1}`, power: 16 });
+      attackerCount = clamp(attackerCount - 2, 0, miners.length);
+      renderAttack();
+      playTone("good");
+    });
+
+    renderAttack();
+
+    // ── Double Spending — Dedektif Modu ──────────────────────────────────
+    let walletSpent = false;
+    let approvedTarget = null;
+    let txHistory = [];
+    let isAnimating = false;
+    let txCounter = 1000;
+    let detectiveStep = 0;
+
+    const NODE_NAMES = ["N1","N2","N3","N4","N5"];
+    const NODE_ICONS = ["🖥️","💻","🖥️","💻","🖥️"];
+
+    const baseSteps = [
+      { label: "İşlem ağa yayınlandı.", icon: "📡" },
+      { label: "Node'lar imzayı ve bakiyeyi doğruladı.", icon: "🔍" },
+      { label: "Bu coin daha önce harcanmış mı? Kayıtlar tarandı.", icon: "📋" },
+      { label: "Çoğunluk oyuyla nihai karar verildi.", icon: "⚖️" }
+    ];
+
+    const detectiveMsgs = {
+      ready:         "🕵️ <strong>Adım 1:</strong> Ali'nin 100 coin'i var. Bir kişiye gönder — ya da aynı coin'i ikisine birden göndermeyi dene!",
+      sending:       "📡 <strong>Adım 2:</strong> İşlem ağa yayınlandı. 5 bağımsız node sırayla kayıtlarını kontrol ediyor…",
+      voting:        "🗳️ <strong>Adım 3:</strong> Node'lar oylama yapıyor. Her biri: 'Bu coin daha önce harcanmış mı?' diye soruyor.",
+      approved:      "✅ <strong>Adım 4 — Onay:</strong> 5 node'un tamamı kabul etti. İşlem blokzincirine yazıldı. Coin artık alıcıda.",
+      doubleAttempt: "⚡ <strong>Şüpheli İşlem!</strong> Aynı coin ikinci kişiye de gönderilmeye çalışılıyor. Node'lar kayıtları tarıyor…",
+      rejected:      "🚫 <strong>Reddedildi:</strong> 5 node'dan 4'ü bu coin'in zaten harcanmış olduğunu tespit etti. Double Spending engellendi!"
+    };
+
+    function fakeShortHash() {
+      return Array.from({length:8}, () => hexChars[Math.floor(Math.random()*16)]).join("") + "…";
+    }
+
+    function nowTime() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+    }
+
+    function setDetectiveMsg(key) {
+      $("#detectiveMsg").innerHTML = detectiveMsgs[key] || "";
+    }
+
+    function setDetectiveStep(n) {
+      detectiveStep = n;
+      $$(".det-step").forEach((el,i) => {
+        el.classList.toggle("active", i === n);
+        el.classList.toggle("done", i < n);
+      });
+    }
+
+    function activateArrow(id, color, active) {
+      const el = $(`#${id}`);
+      if (!el) return;
+      const markerMap = { green: "arrowGreen", red: "arrowRed", amber: "arrowAmber" };
+      const colorMap  = { green: "rgba(54,245,159,0.8)", red: "rgba(255,66,104,0.8)", amber: "rgba(255,209,102,0.8)" };
+      el.setAttribute("stroke", colorMap[color] || colorMap.green);
+      el.setAttribute("marker-end", `url(#${markerMap[color]})`);
+      el.classList.toggle("arrow-active", active);
+    }
+
+    function resetArrows() {
+      ["arrowToAyse","arrowToMehmet"].forEach(id => {
+        const el = $(`#${id}`);
+        if (!el) return;
+        el.setAttribute("stroke","rgba(54,245,159,0.15)");
+        el.setAttribute("marker-end","url(#arrowGreen)");
+        el.classList.remove("arrow-active");
+      });
+    }
+
+    function animateSVGCoin(toAyse, approved, onDone) {
+      const coin = $("#movingCoin");
+      const coinTxt = $("#movingCoinText");
+      if (!coin) { if(onDone) onDone(); return; }
+
+      const startX = 280, startY = 80;
+      const endX = toAyse ? 100 : 460;
+      const endY = 255;
+      const midX = (startX + endX) / 2;
+      const midY = startY - 60;
+
+      coin.setAttribute("fill", approved ? "url(#coinGrad)" : "#ff4268");
+      coin.setAttribute("opacity","1");
+      coinTxt.setAttribute("opacity","1");
+      coinTxt.textContent = approved ? "₿" : "✕";
+
+      let t = 0;
+      const dur = 80;
+      const timer = setInterval(() => {
+        t += 1;
+        const p = t / dur;
+        const bx = (1-p)*(1-p)*startX + 2*(1-p)*p*midX + p*p*endX;
+        const by = (1-p)*(1-p)*startY + 2*(1-p)*p*midY + p*p*endY;
+        coin.setAttribute("cx", bx);
+        coin.setAttribute("cy", by);
+        coinTxt.setAttribute("x", bx);
+        coinTxt.setAttribute("y", by+4);
+        if (t >= dur) {
+          clearInterval(timer);
+          coin.setAttribute("opacity","0");
+          coinTxt.setAttribute("opacity","0");
+          if (onDone) onDone();
+        }
+      }, 16);
+    }
+
+    function updateSVGBalances(ali, ayse, mehmet) {
+      const aliEl = $("#aliBalanceText");
+      const ayseEl = $("#ayseBalanceText");
+      const mehmetEl = $("#mehmetBalanceText");
+      if (aliEl) aliEl.textContent = ali;
+      if (ayseEl) ayseEl.textContent = ayse;
+      if (mehmetEl) mehmetEl.textContent = mehmet;
+      const coins = $$("#svgCoins ellipse, #svgCoins rect, #svgCoins text");
+      coins.forEach(el => el.setAttribute("opacity", ali === 0 ? "0.18" : "1"));
+    }
+
+    function renderVotesNew(votes) {
+      const grid = $("#voteGrid");
+      if (!grid) return;
+      grid.innerHTML = NODE_NAMES.map((name,i) => {
+        const v = votes[i] || "";
+        const icon  = v === "yes" ? "✅" : v === "no" ? "🚫" : v === "voting" ? "⏳" : NODE_ICONS[i];
+        const label = v === "yes" ? "Kabul" : v === "no" ? "Red" : v === "voting" ? "İnceliyor…" : "Bekliyor";
+        return `<div class="node-card ${v}">
+          <div class="node-icon">${icon}</div>
+          <div class="node-label">${name}</div>
+          <div class="node-vote-text">${label}</div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderSteps(states) {
+      const el = $("#verifySteps");
+      if (!el) return;
+      if (!states.length) {
+        el.innerHTML = baseSteps.map(s =>
+          `<div class="step-item" style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.1rem">${s.icon}</span><span>${s.label}</span></div>`
+        ).join(""); return;
+      }
+      el.innerHTML = baseSteps.map((s,i) => {
+        const state = states[i] || "";
+        const badge = state==="done"?"✅":state==="bad"?"🚫":"⏳";
+        return `<div class="step-item ${state}" style="display:flex;gap:10px;align-items:center;">
+          <span style="font-size:1.1rem">${badge}</span><span>${s.label}</span>
+        </div>`;
+      }).join("");
+    }
+
+    function renderTransactions() {
+      const el = $("#txList");
+      if (!el) return;
+      if (!txHistory.length) {
+        el.innerHTML = `<div class="tx-item" style="color:var(--muted);font-size:0.88rem;">Henüz işlem yok.</div>`; return;
+      }
+      el.innerHTML = txHistory.map(tx => {
+        const statusLabel = tx.status==="approved"?"✅ Onaylandı":tx.status==="pending"?"⏳ Kontrol":"🚫 Reddedildi";
+        const statusColor = tx.status==="approved"?"var(--green)":tx.status==="pending"?"var(--amber)":"var(--red)";
+        return `<div class="tx-item ${tx.status} ${tx.flash?`flash-${tx.status}`:""}">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+            <strong>Ali → ${tx.to}</strong>
+            <span style="color:${statusColor};font-weight:900;font-size:0.82rem;">${statusLabel}</span>
+          </div>
+          <div class="small" style="display:grid;gap:3px;color:var(--muted);">
+            <span>📦 <span class="mono">${tx.txId}</span></span>
+            <span>🔗 Hash: <span class="mono">${tx.hash}</span></span>
+            <span>🧱 Blok: <span class="mono">#${tx.block}</span> &nbsp;|&nbsp; 🕐 ${tx.time}</span>
+            <span>💰 Miktar: <strong style="color:var(--amber)">100 coin</strong></span>
+            <span style="margin-top:4px;color:${statusColor}">${tx.reason}</span>
+          </div>
+        </div>`;
+      }).join("");
+      txHistory.forEach(tx => {
+        if (!tx.flash) return;
+        setTimeout(() => { tx.flash=false; renderTransactions(); }, 1100);
+      });
+    }
+
+    function runVerification(target, approved, onComplete) {
+      const states = [];
+      renderSteps(states);
+      renderVotesNew([]);
+      setDetectiveStep(1);
+      const voteResults = NODE_NAMES.map((_,vi) => approved ? "yes" : vi===0 ? "yes" : "no");
+
+      setTimeout(() => {
+        states[0] = "done"; renderSteps(states);
+        setDetectiveStep(2);
+        setDetectiveMsg("voting");
+        voteResults.forEach((_,vi) => {
+          setTimeout(() => {
+            const disp = voteResults.map((r,j) => j<vi?r:j===vi?"voting":"");
+            renderVotesNew(disp);
+            playTone(voteResults[vi]==="yes"?"click":"danger");
+            if (vi === voteResults.length-1) {
+              setTimeout(() => {
+                renderVotesNew(voteResults);
+                const verdictEl = $("#voteVerdict");
+                if (verdictEl) verdictEl.innerHTML = approved
+                  ? `<span style="color:var(--green)">5/5 kabul — konsensüs sağlandı ✅</span>`
+                  : `<span style="color:var(--red)">4/5 red — double spending tespit edildi 🚫</span>`;
+              }, 400);
+            }
+          }, vi * 500);
+        });
+      }, 600);
+
+      setTimeout(() => { states[1]="done"; renderSteps(states); }, 1200);
+      setTimeout(() => { states[2] = approved?"done":"bad"; renderSteps(states); }, 2000);
+      setTimeout(() => {
+        states[3] = approved?"done":"bad"; renderSteps(states);
+        setDetectiveStep(3);
+        if (typeof onComplete === "function") onComplete();
+      }, 3400);
+    }
+
+    function sendCoin(target) {
+      if (isAnimating) return;
+      isAnimating = true;
+      const txId = `TX-${txCounter++}`;
+      const hash = fakeShortHash();
+      const time = nowTime();
+      const block = 18000 + txCounter;
+      const toAyse = target === "Ayşe";
+
+      activateArrow(toAyse?"arrowToAyse":"arrowToMehmet", walletSpent?"amber":"green", true);
+
+      if (!walletSpent) {
+        walletSpent = true;
+        approvedTarget = target;
+        updateSVGBalances(0, toAyse?100:0, toAyse?0:100);
+        const tx = { to:target, status:"pending", reason:"Node'lar doğrulama yapıyor…", txId, hash, time, block };
+        txHistory.push(tx);
+        renderTransactions();
+        setDetectiveMsg("sending");
+        $("#doubleStatus").textContent = "Doğrulanıyor…";
+        $("#doubleStatus").classList.remove("bad");
+        animateSVGCoin(toAyse, true, () => {
+          runVerification(target, true, () => {
+            tx.status = "approved";
+            tx.reason = "5 node'dan 5'i onayladı. Blokzincirine eklendi.";
+            tx.flash = true;
+            $("#doubleStatus").textContent = "✅ Onaylandı";
+            setDetectiveMsg("approved");
+            activateArrow(toAyse?"arrowToAyse":"arrowToMehmet","green",false);
+            isAnimating = false;
+            renderTransactions();
+          });
+        });
+        playTone("good");
+      } else {
+        setDetectiveMsg("doubleAttempt");
+        const tx = { to:target, status:"pending", reason:"Bu coin daha önce harcanmış mı? Taranıyor…", txId, hash, time, block };
+        txHistory.push(tx);
+        renderTransactions();
+        $("#doubleStatus").textContent = "⚠️ Şüpheli işlem";
+        $("#doubleStatus").classList.add("bad");
+        animateSVGCoin(toAyse, false, () => {
+          runVerification(target, false, () => {
+            tx.status = "rejected";
+            tx.reason = `5 node'dan 4'ü reddetti. Bu coin zaten ${approvedTarget}'ye gönderildi.`;
+            tx.flash = true;
+            $("#doubleStatus").textContent = "🚫 Double Spending Engellendi";
+            setDetectiveMsg("rejected");
+            activateArrow(toAyse?"arrowToAyse":"arrowToMehmet","red",false);
+            isAnimating = false;
+            renderTransactions();
+          });
+        });
+        playTone("danger");
+      }
+    }
+
+    function resetDoubleSpend() {
+      walletSpent = false;
+      approvedTarget = null;
+      txHistory = [];
+      isAnimating = false;
+      txCounter = 1000;
+      detectiveStep = 0;
+      updateSVGBalances(100, 0, 0);
+      resetArrows();
+      const statusEl = $("#doubleStatus");
+      if (statusEl) { statusEl.textContent = "Hazır"; statusEl.classList.remove("bad"); }
+      renderVotesNew([]);
+      renderSteps([]);
+      renderTransactions();
+      const verdictEl = $("#voteVerdict");
+      if (verdictEl) verdictEl.innerHTML = "";
+      setDetectiveStep(0);
+      setDetectiveMsg("ready");
+    }
+
+    $("#sendAyse").addEventListener("click", () => sendCoin("Ayşe"));
+    $("#sendMehmet").addEventListener("click", () => sendCoin("Mehmet"));
+    $("#doubleSpend").addEventListener("click", () => {
+      if (isAnimating) return;
+      resetDoubleSpend();
+      setTimeout(() => sendCoin("Ayşe"), 200);
+      setTimeout(() => {
+        const waitForFirst = setInterval(() => {
+          if (!isAnimating && walletSpent) { clearInterval(waitForFirst); sendCoin("Mehmet"); }
+        }, 200);
+      }, 800);
+    });
+    $("#resetDouble").addEventListener("click", resetDoubleSpend);
+    resetDoubleSpend();
+
+    // Güvenlik faktör kartları.
+    const factors = [
+      { title: "Şifreleme", icon: "lock", desc: "Verinin parmak izi alınır; değişiklikler kolayca fark edilir.", score: "+25 güven" },
+      { title: "Node Sayısı", icon: "nodes", desc: "Daha çok bağımsız node, tek noktadan saldırıyı zorlaştırır.", score: "+20 güven" },
+      { title: "Veri Dağıtımı", icon: "data", desc: "Kayıtlar tek bilgisayarda değil, ağın birçok kopyasında tutulur.", score: "+18 güven" },
+      { title: "Merkeziyetsizlik", icon: "center", desc: "Kararlar tek kişi ya da kurum yerine ağ çoğunluğu ile alınır.", score: "+22 güven" },
+      { title: "Konsensüs Mekanizması", icon: "consensus", desc: "Node'lar hangi işlemin doğru olduğunda ortak karar üretir.", score: "+24 güven" },
+      { title: "Ağ Hızı", icon: "speed", desc: "Veri hızlı yayılırsa saldırganın sahte bilgi yayması zorlaşır.", score: "+12 güven" }
+    ];
+
+    const factorIcons = {
+      lock: `<svg viewBox="0 0 24 24" fill="none" stroke="#36f59f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.5" fill="#36f59f" stroke="none"/></svg>`,
+      nodes: `<svg viewBox="0 0 24 24" fill="none" stroke="#22d9ff" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="6" r="2.2" fill="#22d9ff" fill-opacity=".25"/><circle cx="19" cy="6" r="2.2" fill="#36f59f" fill-opacity=".25" stroke="#36f59f"/><circle cx="12" cy="18" r="2.2" fill="#22d9ff" fill-opacity=".25"/><line x1="7" y1="7" x2="17" y2="7"/><line x1="6" y1="8" x2="11" y2="16"/><line x1="18" y1="8" x2="13" y2="16"/></svg>`,
+      data: `<svg viewBox="0 0 24 24" fill="none" stroke="#22d9ff" stroke-width="1.8" stroke-linecap="round"><ellipse cx="12" cy="7" rx="8" ry="3"/><path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7"/><path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5"/></svg>`,
+      center: `<svg viewBox="0 0 24 24" fill="none" stroke="#36f59f" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3" fill="#36f59f" fill-opacity=".3"/><circle cx="4" cy="6" r="1.8" fill="#22d9ff" fill-opacity=".3" stroke="#22d9ff"/><circle cx="20" cy="6" r="1.8" fill="#22d9ff" fill-opacity=".3" stroke="#22d9ff"/><circle cx="4" cy="18" r="1.8" fill="#22d9ff" fill-opacity=".3" stroke="#22d9ff"/><circle cx="20" cy="18" r="1.8" fill="#22d9ff" fill-opacity=".3" stroke="#22d9ff"/><line x1="6" y1="7" x2="10" y2="10" stroke="#22d9ff"/><line x1="18" y1="7" x2="14" y2="10" stroke="#22d9ff"/><line x1="6" y1="17" x2="10" y2="14" stroke="#22d9ff"/><line x1="18" y1="17" x2="14" y2="14" stroke="#22d9ff"/></svg>`,
+      consensus: `<svg viewBox="0 0 24 24" fill="none" stroke="#22d9ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" stroke="#36f59f" stroke-width="2.2"/><circle cx="5" cy="8" r="2" fill="#22d9ff" fill-opacity=".2"/><circle cx="12" cy="5" r="2" fill="#22d9ff" fill-opacity=".2"/><circle cx="19" cy="8" r="2" fill="#22d9ff" fill-opacity=".2"/></svg>`,
+      speed: `<svg viewBox="0 0 24 24" fill="none" stroke="#22d9ff" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a10 10 0 1 1-6.88 2.76"/><polyline points="12 6 12 12 15.5 15.5" stroke="#36f59f"/><line x1="2" y1="12" x2="5" y2="12" stroke="#36f59f" stroke-width="2.2"/></svg>`
+    };
+
+    function renderFactors() {
+      $("#factorGrid").innerHTML = factors.map((factor) => `
+        <article class="glass factor-card">
+          <div class="factor-icon"><span class="glyph ${factor.icon}" aria-hidden="true">${factorIcons[factor.icon] || ""}</span></div>
+          <h3>${factor.title}</h3>
+          <p class="small">${factor.desc}</p>
+          <div class="score-effect">${factor.score}</div>
+        </article>
+      `).join("");
+    }
+    renderFactors();
+
+    // Mini test.
+    const quiz = [
+      {
+        q: "Bir bloktaki veri değişirse ne olur?",
+        answers: ["Zincir hiç etkilenmez.", "Hash değişir ve sonraki bloklar şüpheli olur.", "Node sayısı azalır.", "Sadece blok numarası artar."],
+        correct: 1,
+        explanation: "Her blok, önceki bloğun hash'ini içerir. Bir blok değişince hash'i de değişir ve bu değişiklik tüm sonraki bloklara zincirleme yayılır."
+      },
+      {
+        q: "%51 saldırısı neyi hedefler?",
+        answers: ["Hashleri daha kısa yazmayı.", "İnterneti hızlandırmayı.", "Ağın işlem gücünde çoğunluğu ele geçirmeyi.", "Cüzdan rengini değiştirmeyi."],
+        correct: 2,
+        explanation: "Saldırgan toplam işlem gücünün %51'inden fazlasını kontrol ederse ağın kural koyucusu haline gelir ve sahte blokları geçerli gösterebilir."
+      },
+      {
+        q: "Double spending ne demektir?",
+        answers: ["Node kapatmak.", "Coin'i ikiye bölmek.", "Hash üretmek.", "Aynı coin'i iki kez harcamaya çalışmak."],
+        correct: 3,
+        explanation: "Blokzincir, her coin'in yalnızca bir kez harcanıp harcanmadığını tüm node'ların tuttuğu kayıtlarla denetler; aynı coin ikinci kez harcanmak istenirse reddedilir."
+      },
+      {
+        q: "Node sayısı arttığında güvenlik genelde nasıl etkilenir?",
+        answers: ["Azalır; çünkü herkes aynı olur.", "Artar; çünkü kontrol daha dağıtık olur.", "Hashler silinir.", "Hiç değişmez."],
+        correct: 1,
+        explanation: "Daha fazla bağımsız node, saldırganın ağın çoğunluğunu ele geçirmesini zorlaştırır; tek bir noktanın bozulması sistemi çökertemez."
+      },
+      {
+        q: "Hash neden parmak izine benzetilir?",
+        answers: ["Cüzdan bakiyesini saklar.", "Ağı kapatır.", "Veriyi yüksek sesle okur.", "Veriye özgü kısa bir iz gibi davranır."],
+        correct: 3,
+        explanation: "Her veri girişi için üretilen hash benzersizdir. İki farklı veri asla aynı hash'i vermez; bu yüzden parmak izi gibi kimlik tespitinde kullanılır."
+      }
+    ];
+    const selectedAnswers = new Array(quiz.length).fill(null);
+
+    function renderQuiz() {
+      $("#quizQuestions").innerHTML = quiz.map((item, qIndex) => `
+        <div class="quiz-question">
+          <strong>${qIndex + 1}. ${item.q}</strong>
+          <div class="answers">
+            ${item.answers.map((answer, aIndex) => `
+              <button class="answer-btn ${selectedAnswers[qIndex] === aIndex ? "selected" : ""}" type="button" data-question="${qIndex}" data-answer="${aIndex}">
+                ${answer}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `).join("");
+
+      $$(".answer-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedAnswers[Number(button.dataset.question)] = Number(button.dataset.answer);
+          $("#quizResult").classList.remove("show");
+          renderQuiz();
+          playTone("click");
+        });
+      });
+    }
+
+    function checkQuiz() {
+      let score = 0;
+      $$(".answer-btn").forEach((button) => {
+        const question = Number(button.dataset.question);
+        const answer = Number(button.dataset.answer);
+        button.classList.toggle("correct", answer === quiz[question].correct);
+        button.classList.toggle("wrong", selectedAnswers[question] === answer && answer !== quiz[question].correct);
+        if (selectedAnswers[question] === quiz[question].correct && selectedAnswers[question] === answer) score += 1;
+      });
+
+      // Yanlış cevaplanan sorular için açıklama ekle
+      $$(".quiz-question").forEach((qEl, qIndex) => {
+        const old = qEl.querySelector(".quiz-explanation");
+        if (old) old.remove();
+        if (selectedAnswers[qIndex] !== null && selectedAnswers[qIndex] !== quiz[qIndex].correct) {
+          const exp = document.createElement("div");
+          exp.className = "quiz-explanation";
+          exp.style.cssText = "margin-top:8px;padding:10px 12px;border-left:3px solid var(--amber);background:rgba(255,210,50,0.07);border-radius:0 var(--radius) var(--radius) 0;color:var(--muted);font-size:0.88rem;line-height:1.55;";
+          exp.innerHTML = `<strong style="color:var(--amber)">Açıklama:</strong> ${quiz[qIndex].explanation}`;
+          qEl.appendChild(exp);
+        }
+      });
+
+      const percent = Math.round((score / quiz.length) * 100);
+      const message = percent === 100
+        ? "Mükemmel! Zincir güvenliğinin ana fikirlerini yakaladınız."
+        : percent >= 60
+          ? "Güzel sonuç. Kırmızı uyarı veren bölümleri tekrar deneyerek pekiştirebilirsiniz."
+          : "Başlangıç için iyi deneme. Simülasyonları yeniden kurcalamak öğrenmeyi hızlandırır.";
+      $("#quizResult").innerHTML = `<h3>Sonuç: ${score}/${quiz.length} doğru (${percent}%)</h3><p>${message}</p>`;
+      $("#quizResult").classList.add("show");
+      playTone(percent >= 60 ? "good" : "danger");
+    }
+
+    $("#checkQuiz").addEventListener("click", checkQuiz);
+    $("#resetQuiz").addEventListener("click", () => {
+      selectedAnswers.fill(null);
+      $("#quizResult").classList.remove("show");
+      renderQuiz();
+      playTone("click");
+    });
+    renderQuiz();
+
+    // Sayfa üzerinde görünen bölümlere küçük giriş animasyonu eklenir.
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.animate(
+            [
+              { opacity: 0, transform: "translateY(18px)" },
+              { opacity: 1, transform: "translateY(0)" }
+            ],
+            { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" }
+          );
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.14 });
+
+    $$(".section").forEach((section) => revealObserver.observe(section));
+
+    /*
+      Kısa kullanım:
+      1. Bu dosyayı index.html olarak açın.
+      2. "Simülasyonu Başlat" ile başlayın.
+      3. Her bölümdeki butonları deneyerek zincir kırılması, ağ sağlığı,
+         %51 saldırısı ve double spending senaryosunu canlı izleyin.
+      4. Son bölümde mini testi çözerek öğrenmeyi kontrol edin.
+    */
+  </script>
+</body>
+</html>
