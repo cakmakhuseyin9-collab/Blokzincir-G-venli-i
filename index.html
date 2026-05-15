@@ -1059,19 +1059,26 @@
       animation: alarmFrame 720ms ease-in-out infinite;
     }
 
-    .attack-arena.danger-mode::before {
-      content: "AĞ TEHLİKEDE";
-      position: absolute;
-      z-index: 3;
-      top: 18px;
-      right: 18px;
-      padding: 8px 10px;
+    .attack-alarm {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 16px;
       border-radius: var(--radius);
       color: #fff;
       background: rgba(255, 66, 104, 0.82);
       box-shadow: 0 0 30px rgba(255, 66, 104, 0.44);
       font-weight: 950;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
       animation: alarmText 620ms ease-in-out infinite;
+    }
+    .attack-alarm.visible { display: flex; }
+    .alarm-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #fff; flex-shrink: 0;
+      animation: blink 0.7s ease-in-out infinite;
     }
 
     @keyframes alarmFrame {
@@ -1758,10 +1765,208 @@
         display: none;
       }
     }
+    /* Blok tür rozeti */
+    .block-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+      width: fit-content;
+    }
+    .block-type-badge.genesis { background: rgba(196,125,255,0.18); color: var(--violet); border: 1px solid rgba(196,125,255,0.32); }
+    .block-type-badge.transfer { background: rgba(34,217,255,0.12); color: var(--cyan); border: 1px solid rgba(34,217,255,0.28); }
+    .block-type-badge.record { background: rgba(255,209,102,0.12); color: var(--amber); border: 1px solid rgba(255,209,102,0.28); }
+    .block-type-badge.new { background: rgba(54,245,159,0.12); color: var(--green); border: 1px solid rgba(54,245,159,0.28); }
+
+    /* Kavram sözlüğü modal */
+    .glossary-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+    }
+    .glossary-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .glossary-modal {
+      width: min(820px, calc(100vw - 32px));
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(34,217,255,0.28);
+      border-radius: 12px;
+      background: rgba(6,12,24,0.97);
+      box-shadow: 0 32px 100px rgba(0,0,0,0.7), 0 0 60px rgba(34,217,255,0.08);
+      transform: translateY(24px) scale(0.97);
+      transition: transform 220ms ease;
+      overflow: hidden;
+    }
+    .glossary-overlay.open .glossary-modal {
+      transform: translateY(0) scale(1);
+    }
+    .glossary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(117,234,255,0.14);
+      flex-shrink: 0;
+    }
+    .glossary-header h3 { margin: 0; font-size: 1.16rem; color: var(--cyan); }
+    .glossary-close {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      border-radius: var(--radius);
+      border: 1px solid rgba(117,234,255,0.22);
+      background: rgba(34,217,255,0.07);
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+    .glossary-close:hover { background: rgba(34,217,255,0.16); }
+    .glossary-search-wrap {
+      padding: 14px 22px;
+      border-bottom: 1px solid rgba(117,234,255,0.10);
+      flex-shrink: 0;
+    }
+    .glossary-search {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid rgba(34,217,255,0.22);
+      border-radius: var(--radius);
+      background: rgba(3,10,18,0.74);
+      color: var(--text);
+      font: inherit;
+      outline: 0;
+    }
+    .glossary-search:focus { border-color: rgba(54,245,159,0.5); }
+    .glossary-body {
+      overflow-y: auto;
+      padding: 14px 22px 22px;
+      display: grid;
+      gap: 10px;
+      scrollbar-color: rgba(34,217,255,0.30) transparent;
+    }
+    .glossary-item {
+      display: grid;
+      gap: 5px;
+      padding: 13px 15px;
+      border: 1px solid rgba(117,234,255,0.13);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.03);
+      transition: border-color 160ms ease;
+    }
+    .glossary-item:hover { border-color: rgba(34,217,255,0.28); }
+    .glossary-item dt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-weight: 900;
+      font-size: 0.96rem;
+    }
+    .glossary-item dt .g-tag {
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      background: rgba(34,217,255,0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(34,217,255,0.22);
+    }
+    .glossary-item dd {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+    .glossary-item.hidden { display: none; }
+
+    /* Saldırı maliyeti göstergesi */
+    .attack-cost-bar {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,209,102,0.22);
+      border-radius: var(--radius);
+      background: rgba(255,209,102,0.05);
+      display: grid;
+      gap: 10px;
+    }
+    .attack-cost-bar h4 {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--amber);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .cost-meter-wrap {
+      display: grid;
+      gap: 6px;
+    }
+    .cost-meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .cost-meter {
+      height: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+    .cost-meter-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 400ms ease, background 400ms ease;
+    }
+    .cost-verdict {
+      font-size: 0.86rem;
+      font-weight: 800;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      text-align: center;
+      transition: all 300ms ease;
+    }
+    .cost-verdict.safe { background: rgba(54,245,159,0.10); color: var(--green); border: 1px solid rgba(54,245,159,0.25); }
+    .cost-verdict.warn { background: rgba(255,209,102,0.10); color: var(--amber); border: 1px solid rgba(255,209,102,0.28); }
+    .cost-verdict.danger { background: rgba(255,66,104,0.12); color: var(--red); border: 1px solid rgba(255,66,104,0.32); animation: pulseBad 800ms ease-in-out infinite; }
   </style>
 </head>
 <body>
   <canvas id="networkCanvas" aria-hidden="true"></canvas>
+
+  <!-- Kavram Sözlüğü Modal -->
+  <div class="glossary-overlay" id="glossaryOverlay" role="dialog" aria-modal="true" aria-labelledby="glossaryTitle">
+    <div class="glossary-modal">
+      <div class="glossary-header">
+        <h3 id="glossaryTitle">📖 Kavram Sözlüğü</h3>
+        <button class="glossary-close" id="glossaryClose" aria-label="Sözlüğü kapat">✕</button>
+      </div>
+      <div class="glossary-search-wrap">
+        <input class="glossary-search" id="glossarySearch" type="search" placeholder="Kavram ara… (örn: hash, node, konsensüs)" autocomplete="off" />
+      </div>
+      <dl class="glossary-body" id="glossaryBody"></dl>
+    </div>
+  </div>
 
   <div class="page-shell">
     <header class="topbar">
@@ -1777,6 +1982,7 @@
           <a href="#attack">%51</a>
           <a href="#double">Çifte Harcama</a>
           <a href="#quiz">Test</a>
+          <button class="sound-toggle" id="glossaryToggle" type="button" style="background:rgba(196,125,255,0.12);border-color:rgba(196,125,255,0.28);color:var(--violet);" aria-label="Kavram sözlüğünü aç">📖 Sözlük</button>
           <button class="sound-toggle" id="soundToggle" type="button" data-tip="Tıklayınca küçük arayüz sesleri açılır.">Ses: Kapalı</button>
         </nav>
       </div>
@@ -1828,7 +2034,8 @@
             <div class="chain-track" id="chainTrack" aria-live="polite"></div>
             <div class="control-row">
               <button class="btn" id="addBlock" type="button" data-tip="Son bloğun hash değeri yeni bloğun önceki hash alanına yazılır.">Yeni Blok Ekle</button>
-              <button class="btn danger" id="tamperBlock" type="button" data-tip="2. bloktaki veri değiştirildiğinde sonraki blokların bağlantısı bozulur.">2. Bloğu Değiştir</button>
+              <select id="tamperBlockSelect" style="min-height:42px;padding:0 10px;border-radius:var(--radius);border:1px solid rgba(255,66,104,0.4);background:rgba(44,8,19,0.72);color:var(--text);font:inherit;font-weight:700;cursor:pointer;outline:0;" aria-label="Değiştirilecek bloğu seç"></select>
+              <button class="btn danger" id="tamperBlock" type="button" data-tip="Seçilen bloktaki veri değiştirildiğinde sonraki blokların bağlantısı bozulur.">Bloğu Değiştir</button>
               <button class="btn secondary" id="repairChain" type="button" data-tip="Tüm bloklar sırayla yeniden hesaplanır; gerçek dünyada bunu yapmak çok pahalıdır.">Zinciri Onar</button>
             </div>
           </div>
@@ -1972,8 +2179,10 @@
               <button class="btn danger" id="increaseAttackers" type="button">Saldırgan Node Artır</button>
               <button class="btn danger" id="attackDemo" type="button">Sistemi Saldırıya Uğrat</button>
               <button class="btn good" id="defendDemo" type="button">Ağı Güçlendir</button>
+              <button class="btn secondary" id="resetAttack" type="button" data-tip="Simülasyonu başlangıç durumuna sıfırla.">↺ Sıfırla</button>
             </div>
             <div class="miner-field" id="minerField"></div>
+            <div class="attack-alarm" id="attackAlarm"><span class="alarm-dot"></span>🚨 AĞ TEHLİKEDE — Saldırgan çoğunluğu ele geçirdi!</div>
             <div class="fake-chain" id="fakeChain">
               <div class="fake-block mono">Sahte Blok: Ali -> Saldırgan 100 coin</div>
               <div class="fake-block mono">Sahte İşlem: Aynı coin tekrar harcanmaya çalışıyor</div>
@@ -1989,14 +2198,41 @@
               </div>
             </div>
             <div class="health-meter">
-              <div class="meter-label"><span>Saldırgan gücü</span><strong id="attackerPowerLabel">0%</strong></div>
+              <div class="meter-label"><span>Saldırgan gücü</span><strong id="attackerPowerLabel">0% <span id="attackerPowerRaw" style="font-weight:600;font-size:0.82em;color:var(--muted)">(0 / 100 birim)</span></strong></div>
               <div class="meter"><div class="meter-fill" id="attackerPowerFill"></div></div>
             </div>
             <div class="health-meter">
-              <div class="meter-label"><span>Dürüst ağ gücü</span><strong id="honestPowerLabel">100%</strong></div>
+              <div class="meter-label"><span>Dürüst ağ gücü</span><strong id="honestPowerLabel">100% <span id="honestPowerRaw" style="font-weight:600;font-size:0.82em;color:var(--muted)">(100 / 100 birim)</span></strong></div>
               <div class="meter"><div class="meter-fill" id="honestPowerFill"></div></div>
             </div>
             <p id="attackExplanation" class="small">Saldırgan gücü %51 altında kaldığında ağ çoğunluğu sahte bloğu reddeder.</p>
+
+            <!-- Saldırı maliyeti göstergesi -->
+            <div class="attack-cost-bar">
+              <h4>💸 Saldırı Maliyeti</h4>
+              <div class="cost-meter-wrap">
+                <div class="cost-meter-label">
+                  <span>Donanım maliyeti</span>
+                  <span id="costHardwareVal">Düşük</span>
+                </div>
+                <div class="cost-meter"><div class="cost-meter-fill" id="costHardwareFill" style="width:0%"></div></div>
+              </div>
+              <div class="cost-meter-wrap">
+                <div class="cost-meter-label">
+                  <span>Enerji maliyeti</span>
+                  <span id="costEnergyVal">Düşük</span>
+                </div>
+                <div class="cost-meter"><div class="cost-meter-fill" id="costEnergyFill" style="width:0%"></div></div>
+              </div>
+              <div class="cost-meter-wrap">
+                <div class="cost-meter-label">
+                  <span>Tespit riski</span>
+                  <span id="costDetectVal">Düşük</span>
+                </div>
+                <div class="cost-meter"><div class="cost-meter-fill" id="costDetectFill" style="width:0%"></div></div>
+              </div>
+              <div class="cost-verdict safe" id="costVerdict">✅ Bu ağa saldırmak çok pahalı ve zor.</div>
+            </div>
           </aside>
         </div>
       </section>
@@ -2404,6 +2640,27 @@
       renderChain();
     }
 
+    function updateTamperSelect() {
+      const sel = $("#tamperBlockSelect");
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = chain.map((block, i) => {
+        const label = i === 0 ? `Blok ${block.index} (Genesis — değiştirilemez)` : `Blok ${block.index}`;
+        return `<option value="${i}" ${i === 0 ? "disabled" : ""}>${label}</option>`;
+      }).join("");
+      // Seçimi koru ya da varsayılan 2. blok (index 1)
+      const targetIdx = parseInt(prev) || 1;
+      sel.value = Math.min(Math.max(targetIdx, 1), chain.length - 1);
+    }
+
+    function getBlockTypeBadge(data, index) {
+      if (index === 0) return `<span class="block-type-badge genesis">◈ Genesis</span>`;
+      if (data.includes("->") && data.includes("coin")) return `<span class="block-type-badge transfer">⇄ Transfer</span>`;
+      if (data.includes("kayıt") || data.includes("laboratuvar")) return `<span class="block-type-badge record">📁 Kayıt</span>`;
+      return `<span class="block-type-badge new">✦ Yeni</span>`;
+    }
+
+
     function renderChain() {
       const track = $("#chainTrack");
       track.innerHTML = "";
@@ -2419,6 +2676,7 @@
         const card = document.createElement("article");
         card.className = `block-card ${block.tampered ? "tampered" : ""} ${invalid && i > 0 ? "invalid" : ""}`;
         card.innerHTML = `
+          ${getBlockTypeBadge(block.data, i)}
           <div class="block-head">
             <span>Blok</span>
             <span class="block-badge">${block.index}</span>
@@ -2435,6 +2693,7 @@
       $("#chainStatus").classList.toggle("bad", !isValid);
       $("#blockCount").textContent = chain.length;
       $("#lastHash").textContent = shortHash(chain[chain.length - 1].hash);
+      updateTamperSelect();
     }
 
     $("#addBlock").addEventListener("click", () => {
@@ -2449,9 +2708,12 @@
 
     $("#tamperBlock").addEventListener("click", () => {
       if (chain.length < 2) return;
-      chain[1].data = "Sahte değişiklik: 999 coin";
-      chain[1].tampered = true;
-      chain[1].hash = fakeHash(`${chain[1].index}|${chain[1].prev}|${chain[1].data}|${chain[1].nonce}`);
+      const sel = $("#tamperBlockSelect");
+      const idx = sel ? parseInt(sel.value) : 1;
+      if (isNaN(idx) || idx < 1 || idx >= chain.length) return;
+      chain[idx].data = "Sahte değişiklik: 999 coin";
+      chain[idx].tampered = true;
+      chain[idx].hash = fakeHash(`${chain[idx].index}|${chain[idx].prev}|${chain[idx].data}|${chain[idx].nonce}`);
       renderChain();
       playTone("danger");
     });
@@ -2926,13 +3188,20 @@
       return Math.round((attacker / total) * 100);
     }
 
+    function isDanger() {
+      const total = miners.reduce((sum, miner) => sum + miner.power, 0);
+      const attacker = miners.slice(0, attackerCount).reduce((sum, miner) => sum + miner.power, 0);
+      // Gerçek çoğunluk: saldırgan güç kesinlikle toplam güçün yarısından FAZLA olmalı
+      return attacker * 2 > total;
+    }
+
     function renderAttack() {
       const field = $("#minerField");
       field.innerHTML = "";
       const total = miners.reduce((sum, miner) => sum + miner.power, 0);
       const percent = attackerPercent();
       const honestPercent = 100 - percent;
-      const danger = percent >= 51;
+      const danger = isDanger();
 
       miners.forEach((miner, index) => {
         const share = Math.round((miner.power / total) * 100);
@@ -2989,18 +3258,49 @@
         field.appendChild(card);
       });
 
-      $("#attackerPowerLabel").textContent = `${percent}%`;
-      $("#honestPowerLabel").textContent = `${honestPercent}%`;
+      $("#attackerPowerLabel").innerHTML = `${percent}% <span id="attackerPowerRaw" style="font-weight:600;font-size:0.82em;color:var(--muted)">(${miners.slice(0, attackerCount).reduce((s,m)=>s+m.power,0)} / ${total} birim)</span>`;
+      $("#honestPowerLabel").innerHTML = `${honestPercent}% <span id="honestPowerRaw" style="font-weight:600;font-size:0.82em;color:var(--muted)">(${miners.slice(attackerCount).reduce((s,m)=>s+m.power,0)} / ${total} birim)</span>`;
       $("#attackerPowerFill").style.width = `${percent}%`;
       $("#honestPowerFill").style.width = `${honestPercent}%`;
       $("#attackDonut").style.background = `conic-gradient(var(--red) 0deg ${percent * 3.6}deg, var(--green) ${percent * 3.6}deg 360deg)`;
       $("#attackDonut").dataset.label = `${percent}%`;
       $("#attackArena").classList.toggle("danger-mode", danger);
+      $("#attackAlarm").classList.toggle("visible", danger);
       $("#attackStatus").textContent = danger ? "AĞ TEHLİKEDE" : "Ağ güvende";
       $("#attackStatus").classList.toggle("bad", danger);
       $("#attackExplanation").textContent = danger
         ? "Saldırgan güç %51'i geçti. Simülasyonda sahte blok üretimi başladı ve ağ alarm veriyor."
         : "Saldırgan gücü %51 altında kaldığında ağ çoğunluğu sahte bloğu reddeder.";
+
+      // Saldırı maliyeti göstergesi güncelle
+      const hw = Math.min(percent * 1.6, 100);
+      const en = Math.min(percent * 1.4, 100);
+      const dt = Math.max(100 - percent * 1.2, 5);
+      const fmtLabel = (v) => v < 30 ? "Düşük" : v < 60 ? "Orta" : v < 85 ? "Yüksek" : "Çok Yüksek";
+      const costColor = (v) => v < 30 ? "#36f59f" : v < 60 ? "#ffd166" : "#ff4268";
+      $("#costHardwareFill").style.width = `${hw}%`;
+      $("#costHardwareFill").style.background = costColor(hw);
+      $("#costHardwareVal").textContent = fmtLabel(hw);
+      $("#costEnergyFill").style.width = `${en}%`;
+      $("#costEnergyFill").style.background = costColor(en);
+      $("#costEnergyVal").textContent = fmtLabel(en);
+      $("#costDetectFill").style.width = `${dt}%`;
+      $("#costDetectFill").style.background = costColor(100 - dt);
+      $("#costDetectVal").textContent = dt > 70 ? "Düşük" : dt > 40 ? "Orta" : "Yüksek";
+      const verdict = $("#costVerdict");
+      if (percent === 0) {
+        verdict.className = "cost-verdict safe";
+        verdict.textContent = "✅ Saldırı için henüz kaynak harcanmıyor.";
+      } else if (percent < 30) {
+        verdict.className = "cost-verdict safe";
+        verdict.textContent = "✅ Bu ağa saldırmak çok pahalı ve zor.";
+      } else if (percent < 51) {
+        verdict.className = "cost-verdict warn";
+        verdict.textContent = "⚠️ Saldırgan güçleniyor — ağ hâlâ güvende ama dikkat!";
+      } else {
+        verdict.className = "cost-verdict danger";
+        verdict.textContent = "🚨 %51 aşıldı! Saldırı maliyeti karşılandı — ağ tehlikede!";
+      }
     }
 
     $("#increaseAttackers").addEventListener("click", () => {
@@ -3030,6 +3330,26 @@
     $("#defendDemo").addEventListener("click", () => {
       miners.push({ name: `M${miners.length + 1}`, power: 16 });
       attackerCount = clamp(attackerCount - 2, 0, miners.length);
+      renderAttack();
+      playTone("good");
+    });
+
+    const initialMiners = [
+      { name: "M1", power: 12 },
+      { name: "M2", power: 11 },
+      { name: "M3", power: 10 },
+      { name: "M4", power: 9 },
+      { name: "M5", power: 12 },
+      { name: "M6", power: 13 },
+      { name: "M7", power: 8 },
+      { name: "M8", power: 10 },
+      { name: "M9", power: 15 }
+    ];
+
+    $("#resetAttack").addEventListener("click", () => {
+      miners = initialMiners.map(m => ({ ...m }));
+      attackerCount = 0;
+      $("#attackArena").classList.remove("danger-mode");
       renderAttack();
       playTone("good");
     });
@@ -3372,6 +3692,62 @@
       `).join("");
     }
     renderFactors();
+
+    // ── Kavram Sözlüğü ──────────────────────────────────────────────────────
+    const glossaryTerms = [
+      { term: "Blokzincir (Blockchain)", tag: "Temel", def: "Verilerin birbiriyle bağlı bloklar halinde saklandığı, dağıtık ve değiştirilmesi çok zor olan dijital kayıt sistemidir." },
+      { term: "Blok (Block)", tag: "Temel", def: "İşlem verilerini, önceki bloğun hash'ini ve kendi hash'ini içeren zincirleme veri birimidir. Her blok bir öncekine 'tutunur'." },
+      { term: "Hash", tag: "Şifreleme", def: "Herhangi bir veriden üretilen sabit uzunluklu parmak izidir. Veri tek bir harf bile değişse hash tamamen farklı olur." },
+      { term: "SHA-256", tag: "Şifreleme", def: "Bitcoin'in kullandığı hash algoritmasıdır. Her girdi için 256 bitlik (64 karakterlik) benzersiz bir çıktı üretir." },
+      { term: "Çığ Etkisi (Avalanche)", tag: "Şifreleme", def: "Giriş verisindeki küçük bir değişikliğin hash çıktısında büyük ve rastgele görünen değişimlere yol açması. İyi hash algoritmalarının temel özelliğidir." },
+      { term: "Node (Düğüm)", tag: "Ağ", def: "Blokzincir ağına katılan ve zincirin tam bir kopyasını saklayan bağımsız bilgisayar ya da sunucudur." },
+      { term: "Merkeziyetsizlik", tag: "Ağ", def: "Kararların tek bir merkezi sunucu yerine ağdaki bağımsız node'ların çoğunluğu tarafından alınması. Bu yapı tek nokta başarısızlığını ortadan kaldırır." },
+      { term: "Konsensüs (Uzlaşı)", tag: "Ağ", def: "Tüm node'ların hangi işlemin geçerli olduğu üzerinde anlaşmasını sağlayan kurallardır. Proof of Work ve Proof of Stake en bilinen örneklerdir." },
+      { term: "Proof of Work (İş Kanıtı)", tag: "Konsensüs", def: "Madencilerin bloğu onaylamak için hesaplama gücü harcamasını zorunlu kılan konsensüs mekanizmasıdır. Bitcoin bu yöntemi kullanır." },
+      { term: "%51 Saldırısı", tag: "Güvenlik", def: "Bir saldırganın ya da grubun ağın toplam işlem gücünün %51'inden fazlasını ele geçirerek sahte blok üretmeye çalışmasıdır." },
+      { term: "Double Spending (Çifte Harcama)", tag: "Güvenlik", def: "Aynı dijital varlığı iki kez harcamaya çalışmak. Blokzincir, her işlemin yalnızca bir kez geçerli olduğunu tüm node'larla doğrulayarak bunu engeller." },
+      { term: "Genesis Bloğu", tag: "Temel", def: "Bir blokzincirdeki ilk ve en temel bloktur. Önceki bloğu yoktur; zincirin başlangıç noktasıdır." },
+      { term: "Nonce", tag: "Şifreleme", def: "Madencilerin hedef hash değerini bulmak için deneme yanılma yöntemiyle değiştirdiği sayıdır. Madencilik sürecinin çekirdeğidir." },
+      { term: "Madenci (Miner)", tag: "Ağ", def: "Yeni blokları doğrulamak ve zincire eklemek için hesaplama gücü harcayan ağ katılımcılarıdır. Ödül olarak coin kazanırlar." },
+      { term: "Cüzdan (Wallet)", tag: "Temel", def: "Kripto para birimlerini saklamak ve göndermek için kullanılan, açık ve özel anahtarlardan oluşan dijital sistemdir." },
+      { term: "Dağıtık Defter (Distributed Ledger)", tag: "Ağ", def: "Aynı işlem kaydının ağdaki tüm node'larda tutulmasıdır. Merkezi bir sunucu olmadığı için tek bir yetkili yoktur." },
+      { term: "Şifreleme (Encryption)", tag: "Şifreleme", def: "Verinin yalnızca yetkili kişilerin okuyabileceği biçime dönüştürülmesidir. Hash'leme tek yönlüdür; gerçek şifrelemede veri geri açılabilir." },
+      { term: "Açık Anahtar (Public Key)", tag: "Şifreleme", def: "Herkese açık olan ve para almak için paylaşılan cüzdan adresidir. Özel anahtarla çalışan matematiksel bir çiftin yarısıdır." },
+      { term: "Özel Anahtar (Private Key)", tag: "Şifreleme", def: "Gizli tutulması gereken ve işlemleri imzalamak için kullanılan kriptografik anahtardır. Kaybedilirse cüzdana bir daha ulaşılamaz." },
+    ];
+
+    function renderGlossary(filter = "") {
+      const body = $("#glossaryBody");
+      const q = filter.toLowerCase().trim();
+      body.innerHTML = glossaryTerms.map(({ term, tag, def }) => {
+        const hidden = q && !term.toLowerCase().includes(q) && !def.toLowerCase().includes(q) && !tag.toLowerCase().includes(q);
+        return `<div class="glossary-item${hidden ? " hidden" : ""}">
+          <dt>${term}<span class="g-tag">${tag}</span></dt>
+          <dd>${def}</dd>
+        </div>`;
+      }).join("");
+    }
+
+    renderGlossary();
+
+    $("#glossaryToggle").addEventListener("click", () => {
+      $("#glossaryOverlay").classList.add("open");
+      setTimeout(() => $("#glossarySearch").focus(), 120);
+      playTone("click");
+    });
+
+    function closeGlossary() {
+      $("#glossaryOverlay").classList.remove("open");
+    }
+
+    $("#glossaryClose").addEventListener("click", closeGlossary);
+    $("#glossaryOverlay").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeGlossary(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeGlossary(); });
+
+    $("#glossarySearch").addEventListener("input", (e) => {
+      renderGlossary(e.target.value);
+    });
+    // ── Sözlük sonu ──────────────────────────────────────────────────────────
 
     // Mini test.
     const quiz = [
