@@ -2852,9 +2852,14 @@
 
     function nodeHealth() {
       if (!nodes.length) return 0;
+      const total = nodes.length;
       const active = nodes.filter(n => n.status==="active").length;
       const corrupt = nodes.filter(n => n.status==="corrupt").length;
-      return Math.round(clamp(((active*100)+(corrupt*35))/(nodes.length*100)*100, 0, 100));
+      const offline = nodes.filter(n => n.status==="offline").length;
+      // Bozuk node ağda kalıp yanlış veri yayar → en büyük ceza (0 puan)
+      // Kapalı node ağdan çıkmış ama zararsız → küçük ceza (50 puan)
+      // Aktif node → tam puan (100 puan)
+      return Math.round(clamp(((active * 100) + (offline * 50) + (corrupt * 0)) / (total * 100) * 100, 0, 100));
     }
 
     function updateConnCounter() {
