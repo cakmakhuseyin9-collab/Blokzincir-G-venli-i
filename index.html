@@ -2071,7 +2071,10 @@
 
         <div class="glass panel hash-lab">
           <div class="field">
-            <label for="hashInput">Veri girin</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
+              <label for="hashInput" style="margin:0;">Veri girin</label>
+              <button class="btn secondary" id="randomHashInput" type="button" data-tip="Rastgele bir işlem verisi üretir.">🎲 Rastgele Veri</button>
+            </div>
             <textarea id="hashInput">Ali, Ayşe'ye 10 coin gönderdi.</textarea>
             <p class="small">Hash, veriyi saklamaz; sadece verinin değiştirilip değiştirilmediğini anlamaya yardım eder.</p>
           </div>
@@ -2791,6 +2794,34 @@
     }
 
     $("#hashInput").addEventListener("input", updateHashLab);
+
+    const randomHashData = [
+      "Ali, Ayşe'ye 10 coin gönderdi.",
+      "Blok #4829 onaylandı. İşlem: 0.5 BTC → Mehmet.",
+      "Sözleşme: Zeynep, projeyi 15 Mayıs'ta teslim edecek.",
+      "Hastane kaydı: Hasta No 7741, ilaç dozu güncellendi.",
+      "Seçim oyu: Sandık 42, Oy No 1337 onaylandı.",
+      "Tedarik zinciri: 500 kg tahıl, Ankara deposuna ulaştı.",
+      "NFT transferi: Token #9021 → Yeni sahip: Deniz.",
+      "Sigorta poliçesi: Araç XY-4421, hasar talebi reddedildi.",
+      "Diploma kaydı: Cem Yılmaz, 2024 mezunu, Not: 3.8 GPA.",
+      "Akıllı sözleşme tetiklendi: Kiracı kira ödedi, kapı kilidi açıldı.",
+      "Bağış: Vakıf hesabına 250 TL aktarıldı, belge No 8801.",
+      "İlaç takibi: Lot #CC-902, fabrikadan eczaneye ulaştı.",
+      "Oy sayımı: Okul başkanlığı seçimi, Aday A: 142 oy.",
+      "Kargo: Paket #TR9923 İstanbul'dan İzmir'e yola çıktı.",
+      "Arazi tapusu: Parsel 4402, yeni malik: Fatma Kaya.",
+    ];
+
+    $("#randomHashInput").addEventListener("click", () => {
+      const current = $("#hashInput").value.trim();
+      let pick;
+      do { pick = randomHashData[Math.floor(Math.random() * randomHashData.length)]; }
+      while (pick === current && randomHashData.length > 1);
+      $("#hashInput").value = pick;
+      updateHashLab();
+      playTone("click");
+    });
     updateHashLab();
 
     // Node ağı simülasyonu — geliştirilmiş.
