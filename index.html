@@ -2186,9 +2186,6 @@
               <g id="nodeLinks"></g>
               <g id="packetLayer"></g>
               <g id="nodeLayer"></g>
-              <rect id="debugOverlay" width="1000" height="500" fill="transparent" style="cursor:crosshair;"/>
-              <text id="debugCoords" x="10" y="20" fill="#ffd166" font-size="12" font-weight="bold" font-family="monospace" opacity="0"></text>
-              <circle id="debugDot" cx="-50" cy="-50" r="4" fill="#ffd166" opacity="0"/>
             </svg>
           </div>
           <div class="network-controls-bar glass panel">
@@ -3295,26 +3292,6 @@
     seedNodes();
     setInterval(() => { launchPackets({log:false}); }, 5200);
     setInterval(() => { pushHealthHistory(); }, 3000);
-
-    const debugOverlay = document.getElementById("debugOverlay");
-    const debugCoords = document.getElementById("debugCoords");
-    const debugDot = document.getElementById("debugDot");
-    if (debugOverlay) {
-      debugOverlay.addEventListener("click", function(e) {
-        const svg = document.getElementById("nodeSvg");
-        const rect = svg.getBoundingClientRect();
-        const vb = svg.viewBox.baseVal;
-        const x = Math.round((e.clientX - rect.left) / rect.width * vb.width);
-        const y = Math.round((e.clientY - rect.top) / rect.height * vb.height);
-        debugCoords.textContent = `x:${x}, y:${y}`;
-        debugCoords.setAttribute("x", Math.min(x + 10, 880));
-        debugCoords.setAttribute("y", Math.max(y - 10, 20));
-        debugCoords.setAttribute("opacity","1");
-        debugDot.setAttribute("cx", x);
-        debugDot.setAttribute("cy", y);
-        debugDot.setAttribute("opacity","1");
-      });
-    }
 
     // %51 saldırısı simülasyonu.
     let miners = [
