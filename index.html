@@ -1152,6 +1152,15 @@
       align-items: start;
     }
 
+    #attack {
+      width: min(1560px, calc(100% - 28px));
+      max-width: none;
+    }
+
+    #attack .attack-grid {
+      grid-template-columns: minmax(0, 1.45fr) minmax(330px, 0.75fr);
+    }
+
     .attack-arena {
       position: relative;
       overflow: hidden;
@@ -1194,13 +1203,13 @@
 
     .miner-field {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 10px;
       margin-top: 14px;
     }
 
     .miner {
-      min-height: 134px;
+      min-height: 132px;
       display: grid;
       gap: 10px;
       align-content: center;
@@ -1852,11 +1861,14 @@
         grid-template-columns: 1fr;
       }
 
-      .miner-field,
       .factor-grid,
       .answers,
       .vote-grid {
         grid-template-columns: 1fr;
+      }
+
+      .miner-field {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .node-map {
@@ -2257,10 +2269,9 @@
             <div style="display:flex;flex-direction:column;gap:10px;flex:1;">
               <div class="control-row">
                 <button class="btn" id="propagateData" type="button">Veri Yay</button>
-                <button class="btn secondary" id="addNode" type="button">Yeni Node Ekle</button>
+                <button class="btn good" id="addNode" type="button">Yeni Node Ekle</button>
                 <button class="btn secondary" id="shutdownNode" type="button">Node Kapat</button>
                 <button class="btn danger" id="corruptNode" type="button">Node Boz</button>
-                <button class="btn good" id="strengthenNetwork" type="button">Ağı Güçlendir</button>
               </div>
               <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
                 <p class="small" style="margin:0;color:var(--muted);">💡 Bir node'a tıklayarak onu aktif → bozuk → kapalı şekilde döngüsel olarak değiştirebilirsiniz.</p>
@@ -2284,10 +2295,10 @@
         <div class="attack-grid">
           <div class="glass panel attack-arena" id="attackArena">
             <div class="control-row">
+              <button class="btn good" id="defendDemo" type="button">Ağı Güçlendir</button>
               <button class="btn secondary icon-btn" id="decreaseAttackers" type="button" data-tip="Saldırgan madenci sayısını azalt.">-</button>
               <button class="btn danger" id="increaseAttackers" type="button">Saldırgan Node Artır</button>
               <button class="btn danger" id="attackDemo" type="button">Sistemi Saldırıya Uğrat</button>
-              <button class="btn good" id="defendDemo" type="button">Ağı Güçlendir</button>
               <button class="btn secondary" id="resetAttack" type="button" data-tip="Simülasyonu başlangıç durumuna sıfırla.">↺ Sıfırla</button>
             </div>
             <div class="miner-field" id="minerField"></div>
@@ -3343,18 +3354,6 @@
       }
     });
 
-    $("#strengthenNetwork").addEventListener("click", () => {
-      nodes.filter(n => n.status!=="active").forEach((node,i) => { if(i<2) node.status="active"; });
-      const newName = NODE_CITY_NAMES[nodeId-1] || `N${nodeId}`;
-      nodes.push({ id:nodeId, status:"active", x:50, y:50, name:newName });
-      nodeId++;
-      layoutNodes();
-      addNodeLog("Ağ güçlendirildi: bozuk node'lar izole edildi ve yeni node eklendi.");
-      renderNodeNetwork();
-      launchPackets({log:false});
-      playTone("good");
-    });
-
     seedNodes();
     setInterval(() => { launchPackets({log:false}); }, 5200);
     setInterval(() => { pushHealthHistory(); }, 3000);
@@ -3520,7 +3519,6 @@
 
     $("#defendDemo").addEventListener("click", () => {
       miners.push({ name: `M${miners.length + 1}`, power: 16 });
-      attackerCount = clamp(attackerCount - 2, 0, miners.length);
       renderAttack();
       playTone("good");
     });
